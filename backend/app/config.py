@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     # -------------------------
     APP_NAME: str = "WellNest"
     VERSION: str = "1.0.0"
-    ENVIRONMENT: str = "production"  # "development"  # development | staging | production
+    ENVIRONMENT: str = "production"  # development | staging | production
 
     # -------------------------
     # Logging
@@ -16,11 +16,19 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # -------------------------
-    # Pydantic Config
+    # Database
     # -------------------------
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    MONGODB_URL: str
+    DATABASE_NAME: str
+
+    # -------------------------
+    # Pydantic Config (v2 style)
+    # -------------------------
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",  # ignore unknown env vars
+    )
 
 
 # Singleton (cached settings)

@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from app.api.v1.api import api_router
-from app.core.logging import get_logger, setup_logging
-from app.core.exceptions import api_exception_handler
-from app.model.apiError import ApiError
+from .core.database import connect_to_mongo, close_mongo_connection
+from .api.v1.api import api_router
+from .core.logging import get_logger, setup_logging
+from .core.exceptions import api_exception_handler
+from .model.apiError import ApiError
 
 # -----------------------------
 # INIT LOGGING FIRST
@@ -12,38 +13,42 @@ from app.model.apiError import ApiError
 setup_logging()
 logger = get_logger(__name__)
 
-
 # -----------------------------
 # Lifespan (Startup + Shutdown)
 # -----------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 🔹 Startup
-    logger.info("Starting WellNest backend...")
+    logger.info("🚀 Starting WellNest backend...")
 
     try:
-        # Example: Initialize services here
-        # app.state.db = await connect_to_db()
-        # app.state.redis = await connect_redis()
-        # app.state.llm = load_model()
+        # Initialize MongoDB
+        await connect_to_mongo()
+        logger.info("✅ MongoDB connected")
+
+        # You can add other service initializations here
+        # e.g., Redis, LLM models, caches, etc.
 
         logger.info("✅ All services initialized successfully")
 
     except Exception as e:
-        logger.error(f"Startup failed: {str(e)}")
+        logger.error(f"❌ Startup failed: {str(e)}")
         raise
 
+    # 👉 App runs here
     yield
 
     # 🔹 Shutdown
-    logger.info("Shutting down WellNest backend...")
+    logger.info("🛑 Shutting down WellNest backend...")
 
     try:
-        # Example: Cleanup resources
-        # await app.state.db.close()
-        # await app.state.redis.close()
+        # Cleanup resources
+        await close_mongo_connection()
 
-        logger.info("Shutdown cleanup completed")
+        # Add other shutdown tasks if needed
+        # e.g., await close_redis(), release model resources
+
+        logger.info("✅ Shutdown cleanup completed")
 
     except Exception as e:
         logger.error(f"❌ Shutdown error: {str(e)}")

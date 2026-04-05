@@ -16,6 +16,9 @@ from .logging import get_logger
 from .responses import success_response, error_response
 from .exceptions import api_exception_handler
 
+# Database
+from .database import connect_to_mongo, close_mongo_connection
+
 # Status
 from .status import HTTPStatus
 
@@ -23,9 +26,8 @@ __all__ = [
     # logging
     "get_logger",
     # # database
-    # "Base",
-    # "engine",
-    # "get_db",
+    connect_to_mongo,
+    close_mongo_connection,
     # # security
     # "create_access_token",
     # "verify_token",
