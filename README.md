@@ -148,18 +148,25 @@ wellnest/
 │   │   │
 │   │   ├── api/               # API routes
 │   │   │   ├── v1/
-│   │   │   │   ├── auth.py           # Authentication endpoints
-│   │   │   │   ├── mood.py           # Mood tracking endpoints
-│   │   │   │   ├── journal.py        # Journaling endpoints
-│   │   │   │   ├── chat.py           # AI chat endpoints
-│   │   │   │   ├── analytics.py      # Analytics endpoints
-│   │   │   │   └── reports.py        # Report generation endpoints
-│   │   │
+|   |   |   |   ├── routers/ 
+|   |   |   |   |     ├── healthcheck
+│   │   │   │   |     ├── auth.py           # Authentication endpoints
+│   │   │   │   |     ├── mood.py           # Mood tracking endpoints
+│   │   │   │   |     ├── journal.py        # Journaling endpoints
+│   │   │   │   |     ├── chat.py           # AI chat endpoints
+│   │   │   │   |     ├── analytics.py      # Analytics endpoints
+│   │   │   │   |     └── reports.py        # Report generation endpoints
+│   │   │   |   └── api.py
+|   |   |
 │   │   ├── core/              # Core utilities
 │   │   │   ├── security.py           # Auth & encryption
+|   |   |   ├── logging.py            # Logger
 │   │   │   ├── database.py           # DB connection
-│   │   │   └── middleware.py         # Custom middleware
-│   │   │
+│   │   │   ├── responses.py 
+|   |   |   ├── exceptions.py 
+│   │   │   ├── status.py
+|   |   |   └── middleware.py         # Custom middleware
+|   |   |
 │   │   ├── models/            # Pydantic models
 │   │   │   ├── user.py
 │   │   │   ├── mood.py

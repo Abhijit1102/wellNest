@@ -1,0 +1,49 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi[standard]>=0.135.3",
+    "pydantic-settings>=2.13.1",
+]
+
+[dependency-groups]
+dev = [
+    "black>=26.3.1",
+]
+
+# ------------------------
+# BLACK (formatter)
+# ------------------------
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+skip-string-normalization = true
+
+exclude = '''
+/(
+    \.venv
+  | __pycache__
+  | migrations
+  | build
+  | dist
+)/
+'''
+
+# ------------------------
+# RUFF (linter)
+# ------------------------
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I"]  # Errors, formatting, imports
+ignore = []
+fix = true
+
+# ------------------------
+# ISORT (import sorting)
+# ------------------------
+[tool.isort]
+profile = "black"
+line_length = 100
