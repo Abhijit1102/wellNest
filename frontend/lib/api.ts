@@ -88,8 +88,12 @@ export const apiClient = new ApiClient(API_BASE_URL);
 
 // Auth endpoints
 export const authApi = {
-  register: (email: string, password: string, username: string) =>
-    apiClient.post('/auth/register', { email, password, username }),
+  register: (data: { 
+    email: string; 
+    password: string; 
+    full_name: string; 
+    consent: { data_collection: boolean; ai_training: boolean } 
+  }) => apiClient.post('/auth/register', data),
   login: (email: string, password: string) =>
     apiClient.post('/auth/login', { email, password }),
   logout: () => {

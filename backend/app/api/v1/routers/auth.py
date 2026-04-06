@@ -6,12 +6,7 @@ from app.core.logging import get_logger
 from app.models.status import HTTPStatus
 from app.models.apiError import ApiError
 
-from app.schemas import (
-    UserCreate,
-    UserLogin,
-    PasswordResetRequest,
-    PasswordResetConfirm
-)
+from app.schemas import UserCreate, UserLogin, PasswordResetRequest, PasswordResetConfirm
 
 from app.services.auth_service import (
     create_user,
@@ -19,7 +14,7 @@ from app.services.auth_service import (
     create_user_token,
     get_user_by_email,
     generate_password_reset_token,
-    reset_password
+    reset_password,
 )
 
 from app.services.email_service import send_reset_password_email
@@ -27,25 +22,20 @@ from app.services.email_service import send_reset_password_email
 router = APIRouter(tags=["auth"])
 logger = get_logger(__name__)
 
+
 # -----------------------------
 # ✅ REGISTER
 # -----------------------------
 @router.post("/register")
-async def register(user: UserCreate):
-    logger.info(f"Register request for email: {user.email}")
+async def register(user_in: UserCreate):
+    logger.info(f"Register request for email: {user_in.email}")
 
-    existing = await get_user_by_email(user.email)
+    existing = await get_user_by_email(user_in.email)
     if existing:
-        raise ApiError(
-            status_code=HTTPStatus.BAD_REQUEST,
-            message="User already exists"
-        )
+        raise ApiError(status_code=HTTPStatus.BAD_REQUEST, message="User already exists")
 
-    new_user = await create_user(
-        user.email,
-        user.username,
-        user.password
-    )
+    # The user_in object already contains validated 'consent' from UI
+    new_user = await create_user(user_in)
 
     token = await create_user_token(new_user)
 
@@ -57,12 +47,12 @@ async def register(user: UserCreate):
             "user": {
                 "id": str(new_user.id),
                 "email": new_user.email,
-                "username": new_user.username
-            }
+                "full_name": new_user.full_name,
+                "consent": new_user.consent.model_dump()
+            },
         },
-        status_code=HTTPStatus.CREATED
+        status_code=HTTPStatus.CREATED,
     )
-
 
 # -----------------------------
 # ✅ LOGIN
@@ -73,10 +63,7 @@ async def login(user: UserLogin):
 
     auth_user = await authenticate_user(user.email, user.password)
     if not auth_user:
-        raise ApiError(
-            status_code=HTTPStatus.UNAUTHORIZED,
-            message="Invalid credentials"
-        )
+        raise ApiError(status_code=HTTPStatus.UNAUTHORIZED, message="Invalid credentials")
 
     token = await create_user_token(auth_user)
 
@@ -88,10 +75,10 @@ async def login(user: UserLogin):
             "user": {
                 "id": str(auth_user.id),
                 "email": auth_user.email,
-                "username": auth_user.username
-            }
+                "username": auth_user.full_name,
+            },
         },
-        status_code=HTTPStatus.OK
+        status_code=HTTPStatus.OK,
     )
 
 
@@ -99,10 +86,7 @@ async def login(user: UserLogin):
 # ✅ REQUEST PASSWORD RESET
 # -----------------------------
 @router.post("/request-password-reset")
-async def request_password_reset(
-    req: PasswordResetRequest,
-    background_tasks: BackgroundTasks
-):
+async def request_password_reset(req: PasswordResetRequest, background_tasks: BackgroundTasks):
     logger.info(f"Password reset request for: {req.email}")
 
     user = await get_user_by_email(req.email)
@@ -112,17 +96,12 @@ async def request_password_reset(
         token = await generate_password_reset_token(user)
 
         # ✅ Send email in background
-        background_tasks.add_task(
-            send_reset_password_email,
-            user.email,
-            token
-        )
+        background_tasks.add_task(send_reset_password_email, user.email, token)
 
         logger.info(f"Reset email queued for: {user.email}")
 
     return success_response(
-        message="If this email exists, a reset link was sent",
-        status_code=HTTPStatus.OK
+        message="If this email exists, a reset link was sent", status_code=HTTPStatus.OK
     )
 
 
@@ -136,12 +115,6 @@ async def password_reset(req: PasswordResetConfirm):
     user = await reset_password(req.token, req.new_password)
 
     if not user:
-        raise ApiError(
-            status_code=HTTPStatus.BAD_REQUEST,
-            message="Invalid or expired token"
-        )
+        raise ApiError(status_code=HTTPStatus.BAD_REQUEST, message="Invalid or expired token")
 
-    return success_response(
-        message="Password reset successful",
-        status_code=HTTPStatus.OK
-    )
+    return success_response(message="Password reset successful", status_code=HTTPStatus.OK)

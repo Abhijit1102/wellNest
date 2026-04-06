@@ -11,7 +11,8 @@ Contains all database / domain models:
 # -------------------------
 #  Api Response Model
 
-from .auth import UserCreate,  UserLogin,  UserResponse, PasswordResetRequest, PasswordResetConfirm
+from .auth import UserCreate, UserLogin, UserResponse, PasswordResetRequest, PasswordResetConfirm
+from .user import UserRole
 
 # -------------------------
 
@@ -39,7 +40,7 @@ __all__ = [
     "UserLogin",
     "UserResponse",
     "PasswordResetRequest",
-    "PasswordResetConfirm"
+    "PasswordResetConfirm",
     # "User",
     # "Mood",
     # "Journal",

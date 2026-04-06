@@ -3,6 +3,7 @@ from urllib.parse import urlencode
 from app.templates.email_template import reset_password_email_template
 from app.config import settings
 
+
 def build_reset_password_url(token: str) -> str:
     query = urlencode({"token": token})
     return f"{settings.FRONTEND_URL}/auth/reset-password?{query}"
@@ -19,6 +20,6 @@ async def send_reset_password_email(to_email: str, token: str):
     await send_email(
         to_email=to_email,
         subject=subject,
-        body=html_body,     # HTML content
-        is_html=True        # 👈 IMPORTANT (update send_email)
+        body=html_body,  # HTML content
+        is_html=True,  # 👈 IMPORTANT (update send_email)
     )

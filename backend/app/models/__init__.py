@@ -20,7 +20,7 @@ from .status import HTTPStatus
 # -------------------------
 # User & Auth Models
 # -------------------------
-from .user import User
+from .user import UserProfile, UserConsent, User
 
 # -------------------------
 # Wellness Models
@@ -39,7 +39,9 @@ from .user import User
 __all__ = [
     "ApiResponse",
     "ApiError",
-    "User",
+    "User"
+    # "UserProfile", 
+    # "UserConsent"
     # "Mood",
     # "Journal",
     # "Report",

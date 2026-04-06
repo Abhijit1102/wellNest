@@ -1,10 +1,10 @@
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from typing import Optional, Any
+from pydantic import BaseModel, Field, ConfigDict
+from pydantic_core import core_schema
+from typing import Optional, List, Any
 from datetime import datetime
 from bson import ObjectId
-from pydantic_core import core_schema
-from app.schemas.user import UserRole
 
+# 1. Define the helper class to handle MongoDB ObjectIds
 class PyObjectId(ObjectId):
     @classmethod
     def __get_pydantic_core_schema__(
@@ -34,32 +34,21 @@ class PyObjectId(ObjectId):
             raise ValueError("Invalid ObjectId")
         return ObjectId(v)
 
-# --- Sub-Models for Registration and Consent ---
-
-class UserProfile(BaseModel):
-    age: Optional[int] = None
-    timezone: Optional[str] = "UTC"
-    avatar_url: Optional[str] = None
-
-class UserConsent(BaseModel):
-    data_collection: bool
-    ai_training: bool
-
-# --- Main User Model ---
-
-class User(BaseModel):
-    # Use PyObjectId here; it is now defined above
+# 2. Define the Journal Entry Model
+class JournalEntry(BaseModel):
+    # 'id' maps to MongoDB's '_id'
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
-    email: EmailStr
-    password_hash: str 
-    full_name: str
-    role: UserRole = UserRole.USER
-    is_active: bool = True
-    profile: UserProfile = Field(default_factory=UserProfile)
-    consent: UserConsent
+    user_id: PyObjectId = Field(...)
+    
+    title: Optional[str] = Field(None, max_length=200)
+    content: str  # Encrypted AES-256 string
+    
+    tags: List[str] = Field(default_factory=list)
+    sentiment_score: Optional[float] = Field(None, ge=-1.0, le=1.0)
+    is_favorite: bool = False
+    
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    last_login: Optional[datetime] = None
 
     model_config = ConfigDict(
         populate_by_name=True,

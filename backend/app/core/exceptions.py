@@ -13,7 +13,5 @@ async def api_exception_handler(request: Request, exc: ApiError):
 
     return JSONResponse(
         status_code=exc.status_code,
-        content=error_response(
-            message=exc.message, data={"errors": exc.errors}
-        ).model_dump(),
+        content=error_response(message=exc.message, data={"errors": exc.errors}).model_dump(),
     )

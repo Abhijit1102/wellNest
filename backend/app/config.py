@@ -25,13 +25,13 @@ class Settings(BaseSettings):
     # frontend URL
     # -------------------------
     FRONTEND_URL: str
-   
+
     # -------------------------
     # Authentication
     # -------------------------
-    SECRET_KEY : str
-    ALGORITHM : str
-    ACCESS_TOKEN_EXPIRE_MINUTES : int
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
     RESET_TOKEN_EXPIRY_MINUTES: int
 
     # -------------------------
@@ -42,9 +42,6 @@ class Settings(BaseSettings):
     SMTP_SERVER: str
     SMTP_PORT: int
 
-
-
-    
     # -------------------------
     # Pydantic Config (v2 style)
     # -------------------------

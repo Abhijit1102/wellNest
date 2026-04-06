@@ -164,6 +164,7 @@ wellnest/
 │   │   │   ├── database.py           # DB connection
 │   │   │   ├── responses.py 
 |   |   |   ├── exceptions.py 
+|   |   |   ├── email.py 
 |   |   |   └── middleware.py         # Custom middleware
 |   |   |
 │   │   ├── models/            # Pydantic models
@@ -196,6 +197,10 @@ wellnest/
 │   │   │   ├── journal_service.py
 │   │   │   ├── analytics_service.py
 │   │   │   └── report_service.py
+|   |   |
+|   |   ├── templates/
+|   |   |     ├── email_template.py 
+|   |   |
 │   │   │
 │   │   └── utils/             # Helper functions
 │   │       ├── validators.py

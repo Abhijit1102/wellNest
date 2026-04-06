@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class MongoDB:
     _client: Optional[AsyncIOMotorClient] = None
     _db: Optional[AsyncIOMotorDatabase] = None
@@ -49,6 +50,7 @@ class MongoDB:
 
     def get_collection(self, name: str) -> AsyncIOMotorCollection:
         return self.get_db()[name]
+
 
 # Create singleton instance
 mongodb = MongoDB()

@@ -11,7 +11,12 @@ interface AuthStore {
 
   // Actions
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, username: string) => Promise<boolean>;
+  register: (
+    email: string,
+    password: string,
+    full_name: string,
+    consent: { data_collection: boolean; ai_training: boolean }
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
   setToken: (token: string | null) => void;
   clearError: () => void;
@@ -32,13 +37,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
       // Store in localStorage & cookies for persistence across client & SSR checks
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', token);
-        document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        document.cookie = `auth_token=${token}; path=/; max-age=${
+          60 * 60 * 24 * 7
+        }; SameSite=Lax`;
       }
     } else {
       apiClient.setToken(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
-        document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie =
+          'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
     }
   },
@@ -72,24 +80,36 @@ export const useAuthStore = create<AuthStore>((set) => ({
       apiClient.setToken(authData.access_token);
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', authData.access_token);
-        document.cookie = `auth_token=${authData.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        document.cookie = `auth_token=${
+          authData.access_token
+        }; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
 
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Login failed';
       set({ error: errorMessage, isLoading: false });
       return false;
     }
   },
 
-  register: async (email, password, username) => {
+  register: async (email, password, full_name, consent) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await authApi.register(email, password, username);
+      // ✅ Matches the updated authApi.register signature
+      const response = await authApi.register({
+        email,
+        password,
+        full_name,
+        consent,
+      });
 
       if (!response.success) {
-        set({ error: response.error || 'Registration failed', isLoading: false });
+        set({
+          error: response.error || 'Registration failed',
+          isLoading: false,
+        });
         return false;
       }
 
@@ -104,29 +124,38 @@ export const useAuthStore = create<AuthStore>((set) => ({
       apiClient.setToken(authData.access_token);
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', authData.access_token);
-        document.cookie = `auth_token=${authData.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+        document.cookie = `auth_token=${
+          authData.access_token
+        }; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
 
       return true;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Registration failed';
       set({ error: errorMessage, isLoading: false });
       return false;
     }
   },
 
   logout: async () => {
-    await authApi.logout();
-    set({
-      user: null,
-      token: null,
-      isAuthenticated: false,
-      error: null,
-    });
-    apiClient.setToken(null);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
-      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    try {
+      await authApi.logout();
+    } catch (e) {
+      console.error('Logout error:', e);
+    } finally {
+      set({
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        error: null,
+      });
+      apiClient.setToken(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth_token');
+        document.cookie =
+          'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      }
     }
   },
 }));
@@ -136,7 +165,7 @@ export const initializeAuth = () => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      useAuthStore.setState({ token });
+      useAuthStore.setState({ token, isAuthenticated: true });
       apiClient.setToken(token);
     }
   }

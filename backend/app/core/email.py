@@ -10,7 +10,7 @@ async def send_email(to_email: str, subject: str, body: str, is_html: bool = Fal
     message["Subject"] = subject
 
     if is_html:
-        message.add_alternative(body, subtype="html")  
+        message.add_alternative(body, subtype="html")
     else:
         message.set_content(body)  # plain text
 
@@ -21,4 +21,4 @@ async def send_email(to_email: str, subject: str, body: str, is_html: bool = Fal
         username=settings.EMAIL_SENDER,
         password=settings.EMAIL_PASSWORD,
         start_tls=True,
-    )    
+    )
