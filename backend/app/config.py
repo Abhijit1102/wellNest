@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     # -------------------------
     MONGODB_URL: str
     DATABASE_NAME: str
+
+    # -------------------------
+    # frontend URL
+    # -------------------------
+    FRONTEND_URL: str
    
     # -------------------------
     # Authentication
@@ -27,6 +32,17 @@ class Settings(BaseSettings):
     SECRET_KEY : str
     ALGORITHM : str
     ACCESS_TOKEN_EXPIRE_MINUTES : int
+    RESET_TOKEN_EXPIRY_MINUTES: int
+
+    # -------------------------
+    # SMTP service
+    # -------------------------
+    EMAIL_SENDER: str
+    EMAIL_PASSWORD: str
+    SMTP_SERVER: str
+    SMTP_PORT: int
+
+
 
     
     # -------------------------

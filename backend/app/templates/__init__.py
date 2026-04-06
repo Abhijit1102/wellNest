@@ -1,5 +1,5 @@
 """
-Schamas module for WellNest backend.
+Templates module for WellNest backend.
 
 Contains all database / domain models:
 - User model
@@ -9,16 +9,11 @@ Contains all database / domain models:
 """
 
 # -------------------------
-#  Api Response Model
-
-from .auth import UserCreate,  UserLogin,  UserResponse, PasswordResetRequest, PasswordResetConfirm
-
-# -------------------------
 
 # -------------------------
 # User & Auth Models
 # -------------------------
-# from .user import User
+from .email_template import reset_password_email_template
 
 # -------------------------
 # Wellness Models
@@ -35,12 +30,7 @@ from .auth import UserCreate,  UserLogin,  UserResponse, PasswordResetRequest, P
 # Exports
 # -------------------------
 __all__ = [
-    "UserCreate",
-    "UserLogin",
-    "UserResponse",
-    "PasswordResetRequest",
-    "PasswordResetConfirm"
-    # "User",
+    "import reset_password_email_template",
     # "Mood",
     # "Journal",
     # "Report",

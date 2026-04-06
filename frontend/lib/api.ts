@@ -92,12 +92,18 @@ export const authApi = {
     apiClient.post('/auth/register', { email, password, username }),
   login: (email: string, password: string) =>
     apiClient.post('/auth/login', { email, password }),
-  logout: () => apiClient.post('/auth/logout', {}),
+  logout: () => {
+    apiClient.setToken(null);
+    localStorage.removeItem('token');
+  },
   verifyToken: () => apiClient.get('/auth/verify'),
   requestPasswordReset: (email: string) =>
     apiClient.post('/auth/request-password-reset', { email }),
   resetPassword: (token: string, password: string) =>
-    apiClient.post('/auth/reset-password', { token, password }),
+    apiClient.post('/auth/reset-password', { 
+      token, 
+      new_password: password 
+    }),
 };
 
 // User endpoints

@@ -16,3 +16,10 @@ class UserResponse(BaseModel):
     id: str
     email: EmailStr
     username: str
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirm(BaseModel):
+    token: str
+    new_password: str   

@@ -6,6 +6,7 @@ from .api.v1.api import api_router
 from .core.logging import get_logger, setup_logging
 from .core.exceptions import api_exception_handler
 from .models.apiError import ApiError
+from app.config import settings
 
 # -----------------------------
 # INIT LOGGING FIRST
@@ -71,7 +72,7 @@ def create_app() -> FastAPI:
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:3000"], 
+        allow_origins=["*"], #[settings.FRONTEND_URL], 
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
