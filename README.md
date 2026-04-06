@@ -164,13 +164,13 @@ wellnest/
 │   │   │   ├── database.py           # DB connection
 │   │   │   ├── responses.py 
 |   |   |   ├── exceptions.py 
-│   │   │   ├── status.py
 |   |   |   └── middleware.py         # Custom middleware
 |   |   |
 │   │   ├── models/            # Pydantic models
 │   │   │   ├── user.py
 │   │   │   ├── mood.py
 │   │   │   ├── journal.py
+|   |   |   ├── status.py
 │   │   │   └── report.py
 │   │   │
 │   │   ├── schemas/           # Request/response schemas

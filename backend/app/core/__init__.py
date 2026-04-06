@@ -17,22 +17,26 @@ from .responses import success_response, error_response
 from .exceptions import api_exception_handler
 
 # Database
-from .database import connect_to_mongo, close_mongo_connection
+from .database import mongodb
 
 # Status
-from .status import HTTPStatus
+from app.models.status import HTTPStatus
+
+
+# Sscurity
+from .security import create_access_token, decode_access_token, hash_password, verify_password
 
 __all__ = [
     # logging
     "get_logger",
     # # database
-    connect_to_mongo,
-    close_mongo_connection,
-    # # security
-    # "create_access_token",
-    # "verify_token",
-    # "get_password_hash",
-    # "verify_password",
+    mongodb,
+    # security
+    "create_access_token",
+    "verify_token",
+    "hash_password",
+    "decode_access_token",
+
     # responses & exceptions
     "success_response",
     "error_response",

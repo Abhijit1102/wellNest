@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
-from .core.database import connect_to_mongo, close_mongo_connection
+from .core.database import mongodb
 from .api.v1.api import api_router
 from .core.logging import get_logger, setup_logging
 from .core.exceptions import api_exception_handler
-from .model.apiError import ApiError
+from .models.apiError import ApiError
 
 # -----------------------------
 # INIT LOGGING FIRST
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 
     try:
         # Initialize MongoDB
-        await connect_to_mongo()
+        await mongodb.connect()
         logger.info("✅ MongoDB connected")
 
         # You can add other service initializations here
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
 
     try:
         # Cleanup resources
-        await close_mongo_connection()
+        await mongodb.close()
 
         # Add other shutdown tasks if needed
         # e.g., await close_redis(), release model resources
@@ -53,6 +53,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Shutdown error: {str(e)}")
 
+
+from fastapi.middleware.cors import CORSMiddleware
 
 # -----------------------------
 # App Factory
@@ -65,6 +67,14 @@ def create_app() -> FastAPI:
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:3000"], 
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     # -------------------------

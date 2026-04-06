@@ -1,5 +1,5 @@
 """
-Models module for WellNest backend.
+Schamas module for WellNest backend.
 
 Contains all database / domain models:
 - User model
@@ -11,8 +11,7 @@ Contains all database / domain models:
 # -------------------------
 #  Api Response Model
 
-from .response import ApiResponse
-from .apiError import ApiError
+from .auth import UserCreate,  UserLogin,  UserResponse
 
 # -------------------------
 
@@ -36,8 +35,9 @@ from .apiError import ApiError
 # Exports
 # -------------------------
 __all__ = [
-    "ApiResponse",
-    "ApiError",
+    "UserCreate",
+    "UserLogin",
+    "UserResponse"
     # "User",
     # "Mood",
     # "Journal",

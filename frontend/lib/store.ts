@@ -29,14 +29,16 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ token });
     if (token) {
       apiClient.setToken(token);
-      // Store in localStorage for persistence
+      // Store in localStorage & cookies for persistence across client & SSR checks
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', token);
+        document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
     } else {
       apiClient.setToken(null);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth_token');
+        document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
     }
   },
@@ -70,6 +72,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       apiClient.setToken(authData.access_token);
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', authData.access_token);
+        document.cookie = `auth_token=${authData.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
 
       return true;
@@ -101,6 +104,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       apiClient.setToken(authData.access_token);
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', authData.access_token);
+        document.cookie = `auth_token=${authData.access_token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
       }
 
       return true;
@@ -122,6 +126,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     apiClient.setToken(null);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token');
+      document.cookie = "auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     }
   },
 }));

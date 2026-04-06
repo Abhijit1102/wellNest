@@ -1,6 +1,6 @@
 from typing import Any, Optional
-from app.model import ApiResponse
-from app.core.status import HTTPStatus
+from app.models.response import ApiResponse
+from app.models.status import HTTPStatus
 
 
 def success_response(data: Any = None, message: str = "Success", status_code: int = HTTPStatus.OK):

@@ -20,7 +20,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { AnalyticsSummary, EmotionTrend, Streak } from '@/lib/types';
-import { TrendingUp, Fire, Target } from 'lucide-react';
+import { TrendingUp, Flame, Target } from 'lucide-react';
 
 export default function AnalyticsPage() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
         <Card className="border-primary/20">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Fire className="w-4 h-4" />
+              <Flame className="w-4 h-4" />
               Current Streaks
             </CardTitle>
           </CardHeader>
@@ -276,7 +276,7 @@ export default function AnalyticsPage() {
               <Card key={streak.type} className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="capitalize flex items-center gap-2">
-                    <Fire className="w-5 h-5 text-accent" />
+                    <Flame className="w-5 h-5 text-accent" />
                     {streak.type} Streak
                   </CardTitle>
                 </CardHeader>
