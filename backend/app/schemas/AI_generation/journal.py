@@ -2,10 +2,9 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 from pydantic import ConfigDict
 
+
 class JournalSchema(BaseModel):
-    title: str = Field(
-        default=None, max_length=200, description="Title of the journal entry"
-    )
+    title: str = Field(default=None, max_length=200, description="Title of the journal entry")
     content: str = Field(..., description="The main content of the journal entry")
     tags: List[str] = Field(
         default_factory=list, description="List of tags associated with the journal entry"

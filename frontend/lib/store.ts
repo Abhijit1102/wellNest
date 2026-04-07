@@ -140,12 +140,34 @@ export const useAuthStore = create<AuthStore>((set) => ({
 }));
 
 // ✅ INIT AUTH (VERY IMPORTANT)
-export const initializeAuth = () => {
+export const initializeAuth = async () => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('auth_token');
+
     if (token) {
       apiClient.setToken(token);
       useAuthStore.getState().setToken(token);
+
+      try {
+        const res = await authApi.verifyToken(); // or getCurrentUser()
+
+        if (res.success && res.data) {
+          const user: User = {
+            id: res.data.id,
+            email: res.data.email,
+            full_name: res.data.full_name,
+            created_at: res.data.created_at,
+            updated_at: res.data.updated_at,
+        };
+
+        useAuthStore.getState().setUser(res.data as User);
+
+        } else {
+          useAuthStore.getState().setToken(null);
+        }
+      } catch (e) {
+        useAuthStore.getState().setToken(null);
+      }
     }
   }
 };

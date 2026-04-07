@@ -13,6 +13,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    console.log(token )
+    console.log(isAuthenticated )
     if (isAuthenticated || token) {
       router.push('/dashboard');
     } else {

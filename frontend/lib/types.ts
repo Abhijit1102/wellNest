@@ -2,7 +2,15 @@
 export interface User {
   id: string;
   email: string;
-  username: string;
+  full_name?: string;
+  created_at?: string;   
+  updated_at?: string;  
+}
+
+export interface VerifyResponse {
+  id: string;
+  email: string;
+  full_name: string;
   created_at: string;
   updated_at: string;
 }
@@ -121,3 +129,4 @@ export interface LoadingState {
   isLoading: boolean;
   error: string | null;
 }
+

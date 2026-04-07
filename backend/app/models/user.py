@@ -4,6 +4,8 @@ from datetime import datetime
 from bson import ObjectId
 from pydantic_core import core_schema
 from app.schemas.user import UserRole
+from app.core.time_zone import get_utc_now
+
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -34,33 +36,37 @@ class PyObjectId(ObjectId):
             raise ValueError("Invalid ObjectId")
         return ObjectId(v)
 
+
 # --- Sub-Models for Registration and Consent ---
+
 
 class UserProfile(BaseModel):
     age: Optional[int] = None
     timezone: Optional[str] = "UTC"
     avatar_url: Optional[str] = None
 
+
 class UserConsent(BaseModel):
     data_collection: bool
     ai_training: bool
 
+
 # --- Main User Model ---
+
 
 class User(BaseModel):
     # Use PyObjectId here; it is now defined above
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     email: EmailStr
-    password_hash: str 
+    password_hash: str
     full_name: str
     role: UserRole = UserRole.USER
     is_active: bool = True
     profile: UserProfile = Field(default_factory=UserProfile)
     consent: UserConsent
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now)
-    # ✅ Make it non-optional + auto default
-    last_login: datetime = Field(default_factory=datetime.now)
+    created_at: datetime = Field(default_factory=get_utc_now)
+    updated_at: datetime = Field(default_factory=get_utc_now)
+    last_login: datetime = Field(default_factory=get_utc_now)
 
     model_config = ConfigDict(
         populate_by_name=True,

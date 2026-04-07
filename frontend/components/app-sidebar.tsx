@@ -39,6 +39,7 @@ const navItems = [
 export function AppSidebar() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  console.log(user)
 
   const handleLogout = async () => {
     await logout();
@@ -82,11 +83,11 @@ export function AppSidebar() {
             >
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-semibold text-primary-foreground">
-                  {user?.username?.[0]?.toUpperCase() || 'U'}
+                  {user?.full_name?.[0]?.toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="flex-1 text-left min-w-0">
-                <p className="font-medium text-sm truncate text-foreground">{user?.username}</p>
+                <p className="font-medium text-sm truncate text-foreground">{user?.full_name}</p>
                 <p className="text-xs truncate text-muted-foreground">{user?.email}</p>
               </div>
             </Button>

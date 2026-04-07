@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from datetime import datetime
-
+from datetime import timedelta
+from app.core.time_zone import get_utc_now
 from app.config import settings
 from app.core.responses import success_response, error_response
 from app.core.logging import get_logger
@@ -21,7 +21,7 @@ async def health_check():
         data = {
             "status": "ok",
             "service": "wellnest-backend",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": get_utc_now().isoformat(),
         }
 
         return success_response(message="Server is healthy", data=data, status_code=HTTPStatus.OK)
@@ -46,7 +46,7 @@ async def db_health_check():
         data = {
             "status": "ok",
             "service": f"database: {settings.DATABASE_NAME} is running",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": get_utc_now().isoformat(),
         }
         return success_response(message="Database is healthy", data=data, status_code=HTTPStatus.OK)
 

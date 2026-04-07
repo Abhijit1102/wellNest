@@ -1,6 +1,4 @@
 from fastapi import APIRouter, BackgroundTasks, APIRouter, Header, Depends, HTTPException
-from datetime import datetime
-
 from app.core.responses import success_response
 from app.core.logging import get_logger
 from app.models.status import HTTPStatus
@@ -16,7 +14,7 @@ from app.services.auth_service import (
     get_user_by_email,
     generate_password_reset_token,
     reset_password,
-    get_current_user
+    get_current_user,
 )
 
 from app.services.email_service import send_reset_password_email
@@ -50,11 +48,12 @@ async def register(user_in: UserCreate):
                 "id": str(new_user.id),
                 "email": new_user.email,
                 "full_name": new_user.full_name,
-                "consent": new_user.consent.model_dump()
+                "consent": new_user.consent.model_dump(),
             },
         },
         status_code=HTTPStatus.CREATED,
     )
+
 
 # -----------------------------
 # ✅ LOGIN
@@ -83,6 +82,7 @@ async def login(user: UserLogin):
         status_code=HTTPStatus.OK,
     )
 
+
 # -----------------------------
 # ✅ VERIFY TOKEN (Used by Next.js proxy.ts)
 # -----------------------------
@@ -90,19 +90,24 @@ async def login(user: UserLogin):
 async def verify_token(authorization: str = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated")
-    
+
     token = authorization.split(" ")[1]
     user = await get_current_user(token)
-    
+
     if not user:
         # This is exactly what triggers the Next.js Proxy redirect
         raise HTTPException(status_code=401, detail="User session expired or user deleted")
-        
-    return success_response(
-        message="Token valid",
-        data={"id": str(user.id), "email": user.email},
-        status_code=HTTPStatus.OK
-    )
+    data = {
+        "id": str(user.id),
+        "email": user.email,
+        "full_name": user.full_name,
+        "created_at": user.created_at.isoformat(),
+        "updated_at": user.updated_at.isoformat(),
+    }
+
+    return success_response(message="Token valid", data=data, status_code=HTTPStatus.OK)
+
+
 # -----------------------------
 # ✅ REQUEST PASSWORD RESET
 # -----------------------------

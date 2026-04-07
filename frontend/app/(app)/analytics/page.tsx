@@ -2,13 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { analyticsApi } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -16,17 +25,46 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { AnalyticsSummary, EmotionTrend, Streak } from '@/lib/types';
 import { TrendingUp, Flame, Target } from 'lucide-react';
 
+// ✅ Types (FIXED)
+type MoodTrend = {
+  date: string;
+  value: number; // ✅ backend sends "value", not "average_mood"
+};
+
+type AnalyticsSummary = {
+  average_mood: number;
+  total_mood_entries: number;
+  mood_trend: MoodTrend[];
+  top_emotions: string[];
+};
+
+type EmotionTrend = {
+  emotion: string;
+  count: number;
+  percentage: number;
+};
+
+type Streak = {
+  type: string;
+  current: number;
+  longest: number;
+};
+
 export default function AnalyticsPage() {
+  const [days, setDays] = useState(30);
+
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null);
   const [emotions, setEmotions] = useState<EmotionTrend[]>([]);
   const [streaks, setStreaks] = useState<Streak[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const [loading, setLoading] = useState({
+    isLoading: true,
+    error: null as string | null,
+  });
 
   const COLORS = [
     'var(--chart-1)',
@@ -36,261 +74,233 @@ export default function AnalyticsPage() {
     'var(--chart-5)',
   ];
 
+  // ✅ Fetch Data (dynamic)
   useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        setLoading({ isLoading: true, error: null });
+
+        const [summaryRes, emotionsRes, streaksRes] = await Promise.all([
+          analyticsApi.getSummary(days),
+          analyticsApi.getEmotionTrends(days),
+          analyticsApi.getStreaks(),
+        ]);
+
+        if (summaryRes?.success && summaryRes?.data) {
+          setSummary(summaryRes.data as AnalyticsSummary);
+        }
+
+        if (emotionsRes?.success) {
+          setEmotions(
+            Array.isArray(emotionsRes.data)
+              ? emotionsRes.data
+              : []
+          );
+        }
+
+        if (streaksRes?.success) {
+          setStreaks(
+            Array.isArray(streaksRes.data)
+              ? streaksRes.data
+              : []
+          );
+        }
+
+        setLoading({ isLoading: false, error: null });
+      } catch (err) {
+        console.error(err);
+        setLoading({
+          isLoading: false,
+          error: 'Failed to load analytics',
+        });
+      }
+    };
+
     loadAnalytics();
-  }, []);
+  }, [days]); // ✅ refetch on change
 
-  const loadAnalytics = async () => {
-    try {
-      const [summaryRes, emotionsRes, streaksRes] = await Promise.all([
-        analyticsApi.getSummary(30),
-        analyticsApi.getEmotionTrends(30),
-        analyticsApi.getStreaks(),
-      ]);
-
-      if (summaryRes.success && summaryRes.data) {
-        setSummary(summaryRes.data as AnalyticsSummary);
-      }
-
-      if (emotionsRes.success && emotionsRes.data) {
-        setEmotions(
-          Array.isArray(emotionsRes.data)
-            ? emotionsRes.data
-            : [emotionsRes.data as EmotionTrend]
-        );
-      }
-
-      if (streaksRes.success && streaksRes.data) {
-        setStreaks(
-          Array.isArray(streaksRes.data)
-            ? streaksRes.data
-            : [streaksRes.data as Streak]
-        );
-      }
-    } catch (err) {
-      console.error('[v0] Failed to load analytics:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
+  if (loading.isLoading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Analytics & Insights</h1>
-          <p className="text-muted-foreground mt-2">
-            Loading your wellness data...
-          </p>
-        </div>
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 bg-gray-200 rounded w-64"></div>
+        <div className="h-72 bg-gray-200 rounded"></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Analytics & Insights</h1>
-        <p className="text-muted-foreground mt-2">
-          Understand your wellness patterns and celebrate your progress
-        </p>
+      {/* Header + Filter */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">
+            Analytics & Insights
+          </h1>
+          <p className="text-muted-foreground">
+            Understand your wellness patterns
+          </p>
+        </div>
+
+        {/* ✅ Days Filter */}
+        <div className="flex gap-2">
+          {[7, 30, 90].map((d) => (
+            <Button
+              key={d}
+              size="sm"
+              variant={days === d ? 'default' : 'outline'}
+              onClick={() => setDays(d)}
+            >
+              {d}d
+            </Button>
+          ))}
+        </div>
       </div>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-primary/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+      {/* Error */}
+      {loading.error && (
+        <div className="text-destructive text-sm">
+          {loading.error}
+        </div>
+      )}
+
+      {/* Metrics */}
+      <div className="grid md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex gap-2">
               <Target className="w-4 h-4" />
-              Total Entries (30 Days)
+              Total Entries
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">
+            <p className="text-3xl font-bold">
               {summary?.total_mood_entries || 0}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">mood + journal entries</p>
+            <p className="text-xs text-muted-foreground">
+              last {days} days
+            </p>
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex gap-2">
               <TrendingUp className="w-4 h-4" />
-              Average Mood Score
+              Average Mood
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">
-              {summary?.average_mood?.toFixed(1) || '0'}
+            <p className="text-3xl font-bold">
+              {summary?.average_mood
+                ? summary.average_mood.toFixed(1)
+                : '—'}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">out of 10</p>
           </CardContent>
         </Card>
 
-        <Card className="border-primary/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm flex gap-2">
               <Flame className="w-4 h-4" />
-              Current Streaks
+              Best Streak
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold text-foreground">
-              {streaks.reduce((max, s) => Math.max(max, s.current), 0)}
+            <p className="text-3xl font-bold">
+              {streaks.length
+                ? Math.max(...streaks.map((s) => s.current))
+                : 0}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">days</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
-      <Tabs defaultValue="trends" className="space-y-4">
-        <TabsList className="bg-muted">
-          <TabsTrigger value="trends">Mood Trends</TabsTrigger>
+      {/* Tabs */}
+      <Tabs defaultValue="trends">
+        <TabsList>
+          <TabsTrigger value="trends">Trends</TabsTrigger>
           <TabsTrigger value="emotions">Emotions</TabsTrigger>
           <TabsTrigger value="streaks">Streaks</TabsTrigger>
         </TabsList>
 
-        {/* Trends Tab */}
+        {/* ✅ Trends */}
         <TabsContent value="trends">
-          <Card className="border-primary/20">
+          <Card>
             <CardHeader>
-              <CardTitle>30-Day Mood Trend</CardTitle>
-              <CardDescription>Your emotional wellness journey</CardDescription>
+              <CardTitle>Mood Trend</CardTitle>
             </CardHeader>
             <CardContent>
-              {summary?.mood_trend && summary.mood_trend.length > 0 ? (
+              {summary?.mood_trend?.length ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={summary.mood_trend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="date" stroke="var(--muted-foreground)" style={{ fontSize: '12px' }} />
-                    <YAxis domain={[1, 10]} stroke="var(--muted-foreground)" style={{ fontSize: '12px' }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--card)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '8px',
-                      }}
-                    />
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis domain={[1, 10]} />
+                    <Tooltip />
                     <Line
                       type="monotone"
-                      dataKey="value"
-                      stroke="var(--primary)"
+                      dataKey="value" // ✅ FIXED
                       strokeWidth={2}
-                      dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-80 flex items-center justify-center text-muted-foreground">
-                  No trend data available
-                </div>
+                <p className="text-center text-muted-foreground">
+                  No trend data
+                </p>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Emotions Tab */}
+        {/* ✅ Emotions */}
         <TabsContent value="emotions">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="border-primary/20">
-              <CardHeader>
-                <CardTitle>Emotion Distribution</CardTitle>
-                <CardDescription>Most prevalent emotions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {emotions.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={emotions}
-                        dataKey="count"
-                        nameKey="emotion"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        label
-                      >
-                        {emotions.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'var(--card)',
-                          border: '1px solid var(--border)',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-80 flex items-center justify-center text-muted-foreground">
-                    No emotion data available
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-primary/20">
-              <CardHeader>
-                <CardTitle>Emotion Breakdown</CardTitle>
-                <CardDescription>Detailed emotion statistics</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {emotions.length > 0 ? (
-                  <div className="space-y-4">
-                    {emotions.map((emotion, index) => (
-                      <div key={emotion.emotion} className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium text-foreground">{emotion.emotion}</span>
-                          <span className="text-muted-foreground">{emotion.percentage}%</span>
-                        </div>
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div
-                            className="h-full transition-all"
-                            style={{
-                              width: `${emotion.percentage}%`,
-                              backgroundColor: COLORS[index % COLORS.length],
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-6">
-                    No emotion data available
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Emotion Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {emotions.length ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={emotions}
+                      dataKey="count"
+                      nameKey="emotion"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                    >
+                      {emotions.map((_, i) => (
+                        <Cell
+                          key={i}
+                          fill={COLORS[i % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  No emotion data
+                </p>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        {/* Streaks Tab */}
+        {/* ✅ Streaks */}
         <TabsContent value="streaks">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {streaks.map((streak) => (
-              <Card key={streak.type} className="border-primary/20">
+          <div className="grid md:grid-cols-2 gap-4">
+            {streaks.map((s) => (
+              <Card key={s.type}>
                 <CardHeader>
-                  <CardTitle className="capitalize flex items-center gap-2">
-                    <Flame className="w-5 h-5 text-accent" />
-                    {streak.type} Streak
-                  </CardTitle>
+                  <CardTitle>{s.type}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Current Streak</p>
-                    <p className="text-4xl font-bold text-primary">{streak.current}</p>
-                    <p className="text-sm text-muted-foreground mt-1">consecutive days</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Longest Streak</p>
-                    <p className="text-4xl font-bold text-secondary">{streak.longest}</p>
-                    <p className="text-sm text-muted-foreground mt-1">days</p>
-                  </div>
+                <CardContent>
+                  <p>🔥 Current: {s.current}</p>
+                  <p>🏆 Longest: {s.longest}</p>
                 </CardContent>
               </Card>
             ))}
@@ -299,26 +309,16 @@ export default function AnalyticsPage() {
       </Tabs>
 
       {/* Insights */}
-      <Card className="bg-gradient-to-r from-primary/5 to-secondary/5 border-primary/20">
+      <Card>
         <CardHeader>
-          <CardTitle>Your Wellness Summary</CardTitle>
+          <CardTitle>Insights</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-foreground mb-2">Top Emotions</h3>
-            <p className="text-muted-foreground">
-              {summary?.top_emotions && summary.top_emotions.length > 0
-                ? `Your most frequent emotions are: ${summary.top_emotions.slice(0, 3).join(', ')}`
-                : 'Keep logging your moods and journal entries to see your emotional patterns'}
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold text-foreground mb-2">Progress</h3>
-            <p className="text-muted-foreground">
-              You&apos;ve logged {summary?.total_mood_entries || 0} entries and maintained your wellness tracking.
-              Keep up the great work!
-            </p>
-          </div>
+        <CardContent>
+          <p>
+            {summary?.top_emotions?.length
+              ? `Top emotions: ${summary.top_emotions.join(', ')}`
+              : 'Start logging moods to see insights'}
+          </p>
         </CardContent>
       </Card>
     </div>

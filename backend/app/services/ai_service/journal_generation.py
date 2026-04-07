@@ -14,10 +14,7 @@ _llm = ChatOpenAI(
 _structured_llm = _llm.with_structured_output(JournalSchema)
 
 
-def generate_structured_journal(
-    content: str,
-    title: Optional[str] = None
-) -> JournalSchema:
+def generate_structured_journal(content: str, title: Optional[str] = None) -> JournalSchema:
     """
     Generates a structured journal entry using AI.
 
@@ -33,7 +30,7 @@ You are an AI assistant that outputs structured journal summaries following the 
 
 Instructions:
 1. If the title is missing or too long, generate a concise title within 200 characters summarizing the entry.
-2. Summarize the content clearly and keep it meaningful.
+2. Summarize the content clearly and keep it meaningful and generate this as first person as you are user.
 3. Generate a list of relevant keywords as 'tags'.
 4. Analyze the content and give a 'sentiment_score' between -1 (very negative) and 1 (very positive).
 5. Always return output strictly in the JournalSchema format.
@@ -46,4 +43,3 @@ Content: {content}
     response: JournalSchema = _structured_llm.invoke(prompt)
 
     return response
-

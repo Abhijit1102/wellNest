@@ -1,249 +1,323 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { moodApi } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { MoodEntry, MoodAnalytics } from '@/lib/types';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
+
+// ✅ Types aligned with backend
+type MoodEntry = {
+  _id: string;
+  mood_score: number;
+  notes?: string;
+  created_at: string;
+};
+
+type MoodResponse = {
+  entries: MoodEntry[];
+};
+
+type Trend = {
+  date: string;
+  average_mood: number;
+};
+
+type AnalyticsResponse = {
+  trends: Trend[];
+};
+
+type LoadingState = {
+  isLoading: boolean;
+  error: string | null;
+};
 
 export default function MoodPage() {
   const [mood, setMood] = useState<number>(5);
   const [note, setNote] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [entries, setEntries] = useState<MoodEntry[]>([]);
-  const [analytics, setAnalytics] = useState<MoodAnalytics | null>(null);
 
+  const [entries, setEntries] = useState<MoodEntry[]>([]);
+  const [trends, setTrends] = useState<Trend[]>([]);
+
+  const [loading, setLoading] = useState<LoadingState>({
+    isLoading: true,
+    error: null,
+  });
+
+  const [submitState, setSubmitState] = useState({
+    isLoading: false,
+    success: '',
+    error: '',
+  });
+
+  // ✅ Load data
   useEffect(() => {
+    const loadMoodData = async () => {
+      try {
+        setLoading({ isLoading: true, error: null });
+
+        const entriesRes = await moodApi.getMoods(30);
+        const analyticsRes = await moodApi.getMoodAnalytics(30);
+
+        // Handle Entries
+        if (entriesRes?.success && entriesRes?.data) {
+          const data = entriesRes.data as MoodResponse;
+          setEntries(data.entries || []);
+        }
+
+        // Handle Analytics
+        if (analyticsRes?.success && analyticsRes?.data) {
+          const data = analyticsRes.data as AnalyticsResponse;
+          setTrends(data.trends || []);
+        }
+
+        setLoading({ isLoading: false, error: null });
+      } catch (err) {
+        console.error('[MoodPage Error]:', err);
+
+        setLoading({
+          isLoading: false,
+          error: 'Failed to load mood data',
+        });
+      }
+    };
+
     loadMoodData();
   }, []);
 
-  const loadMoodData = async () => {
-    try {
-      const entriesRes = await moodApi.getMoods(30);
-      const analyticsRes = await moodApi.getMoodAnalytics(30);
-
-      if (entriesRes.success && entriesRes.data) {
-        setEntries(Array.isArray(entriesRes.data) ? entriesRes.data : []);
-      }
-
-      if (analyticsRes.success && analyticsRes.data) {
-        setAnalytics(analyticsRes.data as MoodAnalytics);
-      }
-    } catch (err) {
-      console.error('[v0] Failed to load mood data:', err);
-    }
-  };
-
+  // ✅ Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    setIsLoading(true);
+
+    setSubmitState({ isLoading: true, success: '', error: '' });
 
     try {
-      const response = await moodApi.createMood(mood, note);
-      if (response.success) {
-        setSuccess('Mood logged successfully!');
+      const res = await moodApi.createMood(mood, note);
+
+      if (res.success) {
+        setSubmitState({
+          isLoading: false,
+          success: 'Mood logged successfully!',
+          error: '',
+        });
+
         setMood(5);
         setNote('');
-        setTimeout(() => setSuccess(''), 3000);
-        await loadMoodData();
+
+        // Refresh data
+        const updated = await moodApi.getMoods(30);
+        if (updated.success && updated.data) {
+          const data = updated.data as MoodResponse;
+          setEntries(data.entries || []);
+        }
       } else {
-        setError(response.error || 'Failed to log mood');
+        setSubmitState({
+          isLoading: false,
+          success: '',
+          error: res.error || 'Failed to log mood',
+        });
       }
     } catch (err) {
-      setError('An error occurred while logging mood');
-    } finally {
-      setIsLoading(false);
+      setSubmitState({
+        isLoading: false,
+        success: '',
+        error: 'Something went wrong',
+      });
     }
   };
 
-  const chartData = analytics?.trends || [];
+  // ✅ Emoji helper
+  const getMoodEmoji = (value: number) => {
+    if (value <= 2) return '😔';
+    if (value <= 4) return '😐';
+    if (value <= 6) return '🙂';
+    if (value <= 8) return '😊';
+    return '😄';
+  };
+
+  // ✅ Loading UI
+  if (loading.isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-10 bg-gray-200 rounded w-60"></div>
+        <div className="h-64 bg-gray-200 rounded"></div>
+        <div className="h-64 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Mood Tracker</h1>
-        <p className="text-muted-foreground mt-2">
-          Track your daily mood and recognize patterns in your emotional wellness
+        <h1 className="text-3xl font-bold">Mood Tracker</h1>
+        <p className="text-muted-foreground">
+          Track your emotional patterns
         </p>
       </div>
 
+      {/* Error */}
+      {loading.error && (
+        <div className="text-destructive text-sm">
+          {loading.error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Mood Logging Form */}
-        <Card className="border-primary/20 lg:col-span-1">
+        {/* Form */}
+        <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>Log Your Mood</CardTitle>
-            <CardDescription>How are you feeling today?</CardDescription>
+            <CardTitle>Log Mood</CardTitle>
+            <CardDescription>How do you feel?</CardDescription>
           </CardHeader>
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {error && (
-                <Alert className="border-destructive/50 bg-destructive/5">
-                  <AlertDescription className="text-destructive">{error}</AlertDescription>
+              {submitState.error && (
+                <Alert>
+                  <AlertDescription>
+                    {submitState.error}
+                  </AlertDescription>
                 </Alert>
               )}
 
-              {success && (
-                <Alert className="border-primary/50 bg-primary/5">
-                  <AlertDescription className="text-primary">{success}</AlertDescription>
+              {submitState.success && (
+                <Alert>
+                  <AlertDescription>
+                    {submitState.success}
+                  </AlertDescription>
                 </Alert>
               )}
 
               <FieldGroup>
                 <Field>
-                  <FieldLabel>Mood Level</FieldLabel>
-                  <div className="space-y-4">
-                    <input
-                      type="range"
-                      min="1"
-                      max="10"
-                      value={mood}
-                      onChange={(e) => setMood(parseInt(e.target.value))}
-                      className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
-                      disabled={isLoading}
-                    />
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Not great</span>
-                      <span className="text-2xl font-bold text-primary">{mood}</span>
-                      <span className="text-sm text-muted-foreground">Excellent</span>
-                    </div>
-                    <div className="text-center text-3xl pt-2">
-                      {mood <= 2 && '😔'}
-                      {mood === 3 && '😕'}
-                      {mood === 4 && '😐'}
-                      {mood === 5 && '🙂'}
-                      {mood === 6 && '😊'}
-                      {mood === 7 && '😄'}
-                      {mood === 8 && '😊'}
-                      {mood === 9 && '😄'}
-                      {mood === 10 && '🎉'}
-                    </div>
+                  <FieldLabel>Mood</FieldLabel>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={mood}
+                    onChange={(e) =>
+                      setMood(parseInt(e.target.value))
+                    }
+                    className="w-full"
+                  />
+                  <div className="text-center text-xl">
+                    {getMoodEmoji(mood)} {mood}/10
                   </div>
                 </Field>
               </FieldGroup>
 
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="note">Add a note (optional)</FieldLabel>
+                  <FieldLabel>Note</FieldLabel>
                   <Textarea
-                    id="note"
-                    placeholder="What's on your mind? What triggered this mood?"
                     value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    disabled={isLoading}
-                    className="min-h-24"
+                    onChange={(e) =>
+                      setNote(e.target.value)
+                    }
                   />
                 </Field>
               </FieldGroup>
 
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                disabled={isLoading}
+                className="w-full"
+                disabled={submitState.isLoading}
               >
-                {isLoading ? 'Logging...' : 'Log Mood'}
+                {submitState.isLoading
+                  ? 'Logging...'
+                  : 'Log Mood'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        {/* Mood Analytics */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Trend Chart */}
-          <Card className="border-primary/20">
-            <CardHeader>
-              <CardTitle>Mood Trends (30 Days)</CardTitle>
-              <CardDescription>Your emotional wellness pattern</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                    <XAxis dataKey="date" stroke="var(--muted-foreground)" style={{ fontSize: '12px' }} />
-                    <YAxis domain={[1, 10]} stroke="var(--muted-foreground)" style={{ fontSize: '12px' }} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'var(--card)',
-                        border: '1px solid var(--border)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="average_mood"
-                      stroke="var(--primary)"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-80 flex items-center justify-center text-muted-foreground">
-                  No mood data yet. Start logging to see trends.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+        {/* Chart */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>30-Day Trends</CardTitle>
+          </CardHeader>
 
-          {/* Recent Entries */}
-          <Card className="border-primary/20">
-            <CardHeader>
-              <CardTitle>Recent Entries</CardTitle>
-              <CardDescription>Your mood history</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {entries.length > 0 ? (
-                  entries.map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground">
-                          Mood: {entry.mood_value}/10
-                        </p>
-                        {entry.note && (
-                          <p className="text-sm text-muted-foreground mt-1">{entry.note}</p>
-                        )}
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {new Date(entry.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </p>
-                      </div>
-                      <div className="text-3xl ml-4">
-                        {entry.mood_value <= 2 && '😔'}
-                        {entry.mood_value === 3 && '😕'}
-                        {entry.mood_value === 4 && '😐'}
-                        {entry.mood_value === 5 && '🙂'}
-                        {entry.mood_value === 6 && '😊'}
-                        {entry.mood_value === 7 && '😄'}
-                        {entry.mood_value === 8 && '😊'}
-                        {entry.mood_value === 9 && '😄'}
-                        {entry.mood_value === 10 && '🎉'}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-center py-6">
-                    No entries yet. Log your mood to get started.
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+          <CardContent>
+            {trends.length > 0 ? (
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={trends}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={[1, 10]} />
+                  <Tooltip />
+                  <Line
+                    type="monotone"
+                    dataKey="average_mood"
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-muted-foreground text-center">
+                No data yet
+              </p>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Entries */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Entries</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          {entries.length > 0 ? (
+            <div className="space-y-3">
+              {entries.map((entry) => (
+                <div
+                  key={entry._id}
+                  className="flex justify-between p-3 border rounded"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {entry.mood_score}/10
+                    </p>
+                    {entry.notes && (
+                      <p className="text-sm text-muted-foreground">
+                        {entry.notes}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="text-2xl">
+                    {getMoodEmoji(entry.mood_score)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground">
+              No entries yet
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

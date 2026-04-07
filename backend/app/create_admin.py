@@ -1,10 +1,12 @@
 import asyncio
-from datetime import datetime
 from .config import settings
 from .core.security import hash_password
 from .core.database import mongodb
 from .models.user import User
 from .schemas.user import UserRole, UserConsentSchema
+from datetime import timedelta
+from app.core.time_zone import get_utc_now
+
 
 async def create_admin():
     # 1. Connect to MongoDB
@@ -15,7 +17,7 @@ async def create_admin():
     # 2. Prepare Admin Data
     email = "admin@gmail.com"
     password = "admin123"
-    
+
     # Check if admin already exists
     existing_admin = await users_collection.find_one({"email": email})
     if existing_admin:
@@ -30,17 +32,10 @@ async def create_admin():
         "full_name": "System Administrator",
         "role": UserRole.ADMIN,
         "is_active": True,
-        "profile": {
-            "age": None,
-            "timezone": "UTC",
-            "avatar_url": None
-        },
-        "consent": {
-            "data_collection": True,
-            "ai_training": True
-        },
-        "created_at": datetime.now(),
-        "updated_at": datetime.now()
+        "profile": {"age": None, "timezone": "UTC", "avatar_url": None},
+        "consent": {"data_collection": True, "ai_training": True},
+        "created_at": get_utc_now(),
+        "updated_at": get_utc_now(),
     }
 
     # 4. Insert into DB
@@ -54,6 +49,7 @@ async def create_admin():
         print(f"❌ Error creating admin: {e}")
     finally:
         await mongodb.close()
+
 
 if __name__ == "__main__":
     asyncio.run(create_admin())

@@ -2,12 +2,13 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from .user import UserConsentSchema, UserProfileSchema
 
+
 # Request to create/register user
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    consent: UserConsentSchema 
+    consent: UserConsentSchema
     profile: Optional[UserProfileSchema] = None
 
 

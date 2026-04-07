@@ -1,6 +1,8 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
+import { VerifyResponse } from './types';
+
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
@@ -118,15 +120,23 @@ export const authApi = {
       localStorage.removeItem('auth_token');
     }
   },
-  verifyToken: () => apiClient.get('/auth/verify'),
+  verifyToken: () => apiClient.get<VerifyResponse>('/auth/verify'),
+};
+
+export const userApi = {
+  getProfile: () => apiClient.get('/users/me'),
+  updateProfile: (data: unknown) => apiClient.put('/users/me', data),
 };
 
 // Mood endpoints
 export const moodApi = {
   getMoods: (limit?: number, offset?: number) =>
-    apiClient.get(`/moods${limit ? `?limit=${limit}&offset=${offset || 0}` : ''}`),
+    apiClient.get(`/moods/${limit ? `?limit=${limit}&offset=${offset || 0}` : ''}`),
   createMood: (mood_value: number, note?: string) =>
-    apiClient.post('/moods', { mood_value, note }),
+    apiClient.post('/moods/', { 
+      mood_score: mood_value,
+      notes: note, 
+    }),
   getMoodAnalytics: (days?: number) =>
     apiClient.get(`/moods/analytics${days ? `?days=${days}` : ''}`),
 };
@@ -170,9 +180,12 @@ export const chatApi = {
 
 // Analytics endpoints
 export const analyticsApi = {
-  getSummary: (days?: number) =>
-    apiClient.get(`/analytics/summary${days ? `?days=${days}` : ''}`),
-  getEmotionTrends: (days?: number) =>
-    apiClient.get(`/analytics/emotion-trends${days ? `?days=${days}` : ''}`),
-  getStreaks: () => apiClient.get('/analytics/streaks'),
+  getSummary: (days: number = 7) =>
+    apiClient.get(`/analytics/summary?days=${days}`),
+
+  getEmotionTrends: (days: number = 7) =>
+    apiClient.get(`/analytics/emotion-trends?days=${days}`),
+
+  getStreaks: () =>
+    apiClient.get('/analytics/streaks'),
 };

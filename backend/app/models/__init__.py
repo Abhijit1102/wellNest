@@ -40,8 +40,8 @@ from .journal import JournalEntry
 __all__ = [
     "ApiResponse",
     "ApiError",
-    "User"
-    # "UserProfile", 
+    "User",
+    # "UserProfile",
     # "UserConsent"
     # "Mood",
     # "Journal",

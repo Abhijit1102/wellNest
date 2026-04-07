@@ -40,7 +40,7 @@ export default function ProfileSettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-3xl mx-auto px-4">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
         <p className="text-muted-foreground mt-2">Manage your account information</p>
@@ -87,7 +87,7 @@ export default function ProfileSettingsPage() {
                 <Input
                   id="username"
                   name="username"
-                  defaultValue={user?.username || ''}
+                  defaultValue={user?.full_name || ''}
                   placeholder="Your username"
                   disabled={isLoading}
                 />

@@ -43,8 +43,6 @@ class Settings(BaseSettings):
     SMTP_SERVER: str
     SMTP_PORT: int
 
-
-    
     # -------------------------
     # AI Config
     # -------------------------

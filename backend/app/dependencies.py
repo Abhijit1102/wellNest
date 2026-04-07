@@ -11,9 +11,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="v1/auth/register")
 
 from bson import ObjectId
 
+
 async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     payload = decode_access_token(token)
-    
+
     if not payload:
         raise ApiError(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -31,9 +32,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     user_collection = mongodb.get_collection("users")
 
     try:
-        user_data = await user_collection.find_one({
-            "_id": ObjectId(user_id)
-        })
+        user_data = await user_collection.find_one({"_id": ObjectId(user_id)})
     except Exception:
         raise ApiError(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -41,9 +40,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
         )
 
     if not user_data:
-        raise ApiError(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            message="User not found"
-        )
+        raise ApiError(status_code=status.HTTP_401_UNAUTHORIZED, message="User not found")
 
     return User(**user_data)
