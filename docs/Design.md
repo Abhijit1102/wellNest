@@ -205,7 +205,7 @@ db.mood_logs.createIndex({ "created_at": 1 }, { expireAfterSeconds: 63072000 })
 | `_id` | ObjectId | Yes | Primary key |
 | `user_id` | ObjectId | Yes | Reference to users._id |
 | `title` | String | No | Entry title (max 200 chars) |
-| `content` | String | Yes | Encrypted journal text (AES-256) |
+| `content` | String | Yes | Encrypted journal text (Fernet - AES128 + HMAC) |
 | `tags` | Array[String] | No | User-defined tags for organization |
 | `sentiment_score` | Float | No | AI-analyzed sentiment (-1 to 1) |
 | `is_favorite` | Boolean | No | Starred by user |

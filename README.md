@@ -149,7 +149,7 @@ wellnest/
 │   │   ├── api/               # API routes
 │   │   │   ├── v1/
 |   |   |   |   ├── routers/ 
-|   |   |   |   |     ├── healthcheck
+|   |   |   |   |     ├── healthcheck.py
 │   │   │   │   |     ├── auth.py           # Authentication endpoints
 │   │   │   │   |     ├── mood.py           # Mood tracking endpoints
 │   │   │   │   |     ├── journal.py        # Journaling endpoints
@@ -165,6 +165,7 @@ wellnest/
 │   │   │   ├── responses.py 
 |   |   |   ├── exceptions.py 
 |   |   |   ├── email.py 
+|   |   |   ├── decoder_encoder.py
 |   |   |   └── middleware.py         # Custom middleware
 |   |   |
 │   │   ├── models/            # Pydantic models
@@ -180,7 +181,7 @@ wellnest/
 │   │   │   └── journal.py
 │   │   │
 │   │   ├── services/          # Business logic
-│   │   │   ├── langgraph/            # LangGraph AI workflows
+│   │   │   ├── graph/            # LangGraph AI workflows
 │   │   │   │   ├── agents/
 │   │   │   │   │   ├── chat_agent.py        # Main chat agent
 │   │   │   │   │   ├── journal_agent.py     # Journaling prompts

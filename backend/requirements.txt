@@ -6,3 +6,5 @@ python-jose
 pydantic[email]
 argon2-cffi 
 passlib
+cryptography
+langchain-openai

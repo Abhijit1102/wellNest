@@ -1,6 +1,7 @@
+// lib/store.ts
 import { create } from 'zustand';
-import { User, AuthResponse } from './types';
 import { apiClient, authApi } from './api';
+import { User, AuthResponse } from './types';
 
 interface AuthStore {
   user: User | null;
@@ -9,18 +10,18 @@ interface AuthStore {
   error: string | null;
   isAuthenticated: boolean;
 
-  // Actions
   login: (email: string, password: string) => Promise<boolean>;
   register: (
     email: string,
     password: string,
     full_name: string,
-    consent: { data_collection: boolean; ai_training: boolean }
+    consent: any
   ) => Promise<boolean>;
+
   logout: () => Promise<void>;
   setToken: (token: string | null) => void;
-  clearError: () => void;
   setUser: (user: User | null) => void;
+  clearError: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -30,20 +31,24 @@ export const useAuthStore = create<AuthStore>((set) => ({
   error: null,
   isAuthenticated: false,
 
+  // ✅ SINGLE SOURCE OF TRUTH
   setToken: (token) => {
-    set({ token });
-    if (token) {
-      apiClient.setToken(token);
-      // Store in localStorage & cookies for persistence across client & SSR checks
-      if (typeof window !== 'undefined') {
+    apiClient.setToken(token);
+
+    set({
+      token,
+      isAuthenticated: !!token,
+    });
+
+    if (typeof window !== 'undefined') {
+      if (token) {
         localStorage.setItem('auth_token', token);
+
+        // ✅ CRITICAL: cookie for middleware
         document.cookie = `auth_token=${token}; path=/; max-age=${
           60 * 60 * 24 * 7
         }; SameSite=Lax`;
-      }
-    } else {
-      apiClient.setToken(null);
-      if (typeof window !== 'undefined') {
+      } else {
         localStorage.removeItem('auth_token');
         document.cookie =
           'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -52,121 +57,95 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   setUser: (user) => {
-    set({ user, isAuthenticated: !!user });
+    set({ user }); // ❌ don't touch isAuthenticated here
   },
 
-  clearError: () => {
-    set({ error: null });
-  },
+  clearError: () => set({ error: null }),
 
+  // 🔥 LOGIN (CLEAN + RELIABLE)
   login: async (email, password) => {
     set({ isLoading: true, error: null });
-    try {
-      const response = await authApi.login(email, password);
 
-      if (!response.success) {
-        set({ error: response.error || 'Login failed', isLoading: false });
-        return false;
-      }
+    const response = await authApi.login(email, password);
 
-      const authData = response.data as AuthResponse;
+    if (!response.success) {
       set({
-        token: authData.access_token,
-        user: authData.user,
-        isAuthenticated: true,
+        error: response.error || 'Login failed',
         isLoading: false,
       });
-
-      apiClient.setToken(authData.access_token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', authData.access_token);
-        document.cookie = `auth_token=${
-          authData.access_token
-        }; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      }
-
-      return true;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Login failed';
-      set({ error: errorMessage, isLoading: false });
       return false;
     }
+
+    const authData = response.data as AuthResponse;
+
+    // ✅ ALWAYS use setToken
+    useAuthStore.getState().setToken(authData.access_token);
+
+    set({
+      user: authData.user,
+      isLoading: false,
+    });
+
+    return true;
   },
 
   register: async (email, password, full_name, consent) => {
     set({ isLoading: true, error: null });
-    try {
-      // ✅ Matches the updated authApi.register signature
-      const response = await authApi.register({
-        email,
-        password,
-        full_name,
-        consent,
-      });
 
-      if (!response.success) {
-        set({
-          error: response.error || 'Registration failed',
-          isLoading: false,
-        });
-        return false;
-      }
+    const response = await authApi.register({
+      email,
+      password,
+      full_name,
+      consent,
+    });
 
-      const authData = response.data as AuthResponse;
+    if (!response.success) {
       set({
-        token: authData.access_token,
-        user: authData.user,
-        isAuthenticated: true,
+        error: response.error || 'Registration failed',
         isLoading: false,
       });
-
-      apiClient.setToken(authData.access_token);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', authData.access_token);
-        document.cookie = `auth_token=${
-          authData.access_token
-        }; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-      }
-
-      return true;
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Registration failed';
-      set({ error: errorMessage, isLoading: false });
       return false;
     }
+
+    const authData = response.data as AuthResponse;
+
+    useAuthStore.getState().setToken(authData.access_token);
+
+    set({
+      user: authData.user,
+      isLoading: false,
+    });
+
+    return true;
   },
 
   logout: async () => {
     try {
       await authApi.logout();
     } catch (e) {
-      console.error('Logout error:', e);
+      console.error(e);
     } finally {
+      useAuthStore.getState().setToken(null);
+
       set({
         user: null,
-        token: null,
-        isAuthenticated: false,
         error: null,
       });
-      apiClient.setToken(null);
+
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        document.cookie =
-          'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        window.location.href = '/auth/login';
       }
     }
   },
 }));
 
-// Hook to restore auth state from localStorage on app load
+// ✅ INIT AUTH (VERY IMPORTANT)
 export const initializeAuth = () => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('auth_token');
     if (token) {
-      useAuthStore.setState({ token, isAuthenticated: true });
       apiClient.setToken(token);
+      useAuthStore.getState().setToken(token);
     }
   }
 };

@@ -21,6 +21,7 @@ from .status import HTTPStatus
 # User & Auth Models
 # -------------------------
 from .user import UserProfile, UserConsent, User
+from .journal import JournalEntry
 
 # -------------------------
 # Wellness Models

@@ -2,261 +2,297 @@
 
 import { useState, useEffect } from 'react';
 import { journalApi } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter 
+} from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { JournalEntry } from '@/lib/types';
-import { Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Plus, Sparkles, Trash2, Pencil, Star, Loader2 } from 'lucide-react';
+
+export interface JournalEntry {
+  _id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  tags?: string[];
+  sentiment_score?: number | null;
+  is_favorite?: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function JournalPage() {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [prompt, setPrompt] = useState('');
-  const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-  });
+  const [formData, setFormData] = useState({ title: '', content: '' });
 
   useEffect(() => {
     loadEntries();
-    loadPrompt();
   }, []);
 
   const loadEntries = async () => {
     try {
+      setIsFetching(true);
       const response = await journalApi.getEntries(50);
       if (response.success && response.data) {
-        setEntries(Array.isArray(response.data) ? response.data : []);
+        const result = response.data as any;
+        setEntries(Array.isArray(result.entries) ? result.entries : []);
       }
     } catch (err) {
-      console.error('[v0] Failed to load journal entries:', err);
+      console.error('Failed to load journal entries:', err);
+    } finally {
+      setIsFetching(false);
     }
   };
 
-  const loadPrompt = async () => {
-    try {
-      const response = await journalApi.getPrompt();
-      if (response.success && response.data) {
-        setPrompt((response.data as any).text || '');
-      }
-    } catch (err) {
-      console.error('[v0] Failed to load prompt:', err);
-    }
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setFormData({ title: '', content: '' });
+    setError('');
+    setSuccess('');
+    setIsOpen(true);
+  };
+
+  const handleOpenEdit = (entry: JournalEntry) => {
+    setEditingId(entry._id);
+    setFormData({ 
+      title: entry.title || '', 
+      content: entry.content || '' 
+    });
+    setError('');
+    setSuccess('');
+    setIsOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     setIsLoading(true);
 
     try {
-      const response = await journalApi.createEntry(formData.title, formData.content);
-      if (response.success) {
-        setSuccess('Entry saved successfully!');
-        setFormData({ title: '', content: '' });
-        setTimeout(() => setSuccess(''), 3000);
-        await loadEntries();
-        setIsOpen(false);
+      const response = editingId 
+        ? await journalApi.updateEntry(editingId, formData)
+        : await journalApi.createEntry(formData.title, formData.content);
+
+      if (response.success && response.data) {
+        const savedEntry = response.data as JournalEntry;
+        setSuccess(editingId ? 'Saved!' : 'Created!');
+
+        if (editingId) {
+          setEntries(prev => prev.map(item =>
+            item._id === editingId ? savedEntry : item
+          ));
+        } else {
+          setEntries(prev => [savedEntry, ...prev]);
+        }
+
+        setTimeout(() => {
+          setIsOpen(false);
+          setSuccess('');
+        }, 600);
       } else {
-        setError(response.error || 'Failed to save entry');
+        setError(response.error || 'Action failed');
       }
     } catch (err) {
-      setError('An error occurred while saving your entry');
+      setError('Connection error');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this entry?')) {
+    if (window.confirm('Are you sure? This action cannot be undone.')) {
       try {
         const response = await journalApi.deleteEntry(id);
         if (response.success) {
-          await loadEntries();
+          setEntries(prev => prev.filter(item => item._id !== id));
         }
       } catch (err) {
-        console.error('[v0] Failed to delete entry:', err);
+        console.error('Delete failed:', err);
       }
     }
   };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-start justify-between">
+    <div className="container max-w-7xl mx-auto py-10 px-4 space-y-8">
+      {/* --- HEADER --- */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Journal</h1>
-          <p className="text-muted-foreground mt-2">
-            Express your thoughts, feelings, and experiences. Your safe space for reflection.
+          <h1 className="text-4xl font-extrabold tracking-tight">Your Journal</h1>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Document your journey and explore your inner thoughts.
           </p>
         </div>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Plus className="w-4 h-4" />
-              New Entry
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Write a New Journal Entry</DialogTitle>
-              <DialogDescription>
-                Share your thoughts and feelings. This is your personal space.
-              </DialogDescription>
-            </DialogHeader>
-
-            {error && (
-              <Alert className="border-destructive/50 bg-destructive/5">
-                <AlertDescription className="text-destructive">{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {success && (
-              <Alert className="border-primary/50 bg-primary/5">
-                <AlertDescription className="text-primary">{success}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="title">Title</FieldLabel>
-                  <Input
-                    id="title"
-                    placeholder="Give your entry a title..."
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    disabled={isLoading}
-                  />
-                </Field>
-              </FieldGroup>
-
-              {prompt && (
-                <div className="rounded-lg bg-primary/5 border border-primary/20 p-4">
-                  <div className="flex gap-2 items-start mb-2">
-                    <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-sm text-foreground">Writing Prompt</p>
-                      <p className="text-sm text-muted-foreground mt-1">{prompt}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <FieldGroup>
-                <Field>
-                  <FieldLabel htmlFor="content">Your Thoughts</FieldLabel>
-                  <Textarea
-                    id="content"
-                    placeholder="Write whatever is on your mind..."
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    required
-                    disabled={isLoading}
-                    className="min-h-64"
-                  />
-                </Field>
-              </FieldGroup>
-
-              <div className="flex gap-3">
-                <Button
-                  type="submit"
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Saving...' : 'Save Entry'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsOpen(false)}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={handleOpenCreate} size="lg" className="shadow-md gap-2">
+          <Plus className="w-5 h-5" /> New Entry
+        </Button>
       </div>
 
-      {/* Entries Grid */}
-      <div>
-        {entries.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {entries.map((entry) => (
-              <Card key={entry.id} className="border-primary/20 hover:border-primary/40 transition-colors flex flex-col">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg line-clamp-2">{entry.title}</CardTitle>
-                      <CardDescription className="mt-1">
-                        {new Date(entry.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(entry.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+      {/* --- DIALOG --- */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              {editingId ? 'Edit Entry' : 'Create New Entry'}
+            </DialogTitle>
+            <DialogDescription>
+              {editingId ? 'Modify your existing thoughts.' : 'Write down what is on your mind today.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          {success && (
+            <Alert className="bg-emerald-50 border-emerald-200 text-emerald-700">
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6 py-4">
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-semibold">Title</label>
+              <Input
+                id="title"
+                placeholder="Give your entry a title..."
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="content" className="text-sm font-semibold">Content</label>
+              <Textarea
+                id="content"
+                placeholder="Start typing..."
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                className="min-h-[250px] leading-relaxed"
+                required
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading} className="min-w-[100px]">
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {editingId ? 'Save Changes' : 'Post Entry'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- CONTENT GRID --- */}
+      {isFetching ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-10 h-10 animate-spin text-muted-foreground" />
+        </div>
+      ) : entries.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {entries.map((entry) => (
+            <Card 
+              key={entry._id}
+              className="group flex flex-col h-full hover:shadow-lg transition-shadow duration-300"
+            >
+              <CardHeader className="pb-3 relative">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2 pr-10">
+                    {entry.is_favorite && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 shrink-0" />}
+                    <CardTitle className="text-xl font-bold truncate">
+                      {entry.title || 'Untitled'}
+                    </CardTitle>
+                  </div>
+                  <div className="flex gap-1 absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEdit(entry)}>
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:bg-destructive/10" 
+                      onClick={() => handleDelete(entry._id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                  <p className="text-sm text-muted-foreground line-clamp-4 mb-4">
-                    {entry.content}
-                  </p>
-                  {entry.ai_insights && (
-                    <div className="mt-auto pt-4 border-t border-border">
-                      <p className="text-xs font-medium text-primary mb-2 flex items-center gap-1">
-                        <Sparkles className="w-3 h-3" />
-                        AI Insights
-                      </p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {entry.ai_insights}
-                      </p>
+                </div>
+                <CardDescription className="font-medium">
+                  {new Date(entry.created_at).toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric'
+                  })}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="flex-1 flex flex-col justify-between">
+                <p className="text-sm text-muted-foreground line-clamp-5 leading-relaxed italic mb-6">
+                  "{entry.content}"
+                </p>
+
+                <div className="space-y-4">
+                  {entry.tags && entry.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {entry.tags.map((tag, index) => (
+                        <span 
+                          key={`${tag}-${index}`} 
+                          className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary px-2.5 py-1 rounded-md font-bold"
+                        >
+                          {tag}
+                        </span>
+                      ))}
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="border-primary/20">
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mb-4 text-4xl">📓</div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No entries yet</h3>
-              <p className="text-muted-foreground mb-6 max-w-xs">
-                Start your journaling journey by writing your first entry. This is your personal space for reflection.
-              </p>
-              <Button
-                onClick={() => setIsOpen(true)}
-                className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="w-4 h-4" />
-                Write Your First Entry
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+
+                  {(entry.sentiment_score ?? 0) !== 0 && (
+                    <div className="pt-3 border-t flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                        <Sparkles className="w-4 h-4" />
+                        Mood Insight
+                      </div>
+                      <span className="text-xs bg-muted px-2 py-1 rounded font-mono">
+                        {((entry.sentiment_score ?? 0) * 100).toFixed(0)}% Positivity
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-32 border-2 border-dashed rounded-3xl bg-muted/20">
+          <div className="text-5xl mb-4">📖</div>
+          <h2 className="text-2xl font-semibold">Your journal is empty</h2>
+          <p className="text-muted-foreground mb-8 text-center max-w-sm">
+            Begin your storytelling journey today. Your first entry is just a click away.
+          </p>
+          <Button onClick={handleOpenCreate} variant="outline" className="rounded-full px-8">
+            Create First Entry
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

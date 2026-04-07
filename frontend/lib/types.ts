@@ -34,11 +34,13 @@ export interface MoodAnalytics {
 
 // Journal types
 export interface JournalEntry {
-  id: string;
+  id: string; // The aliased _id from FastAPI
   user_id: string;
-  title: string;
+  title: string; 
   content: string;
-  ai_insights?: string;
+  tags: string[];
+  sentiment_score: number;
+  is_favorite: boolean;
   created_at: string;
   updated_at: string;
 }

@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     RESET_TOKEN_EXPIRY_MINUTES: int
+    FERNET_KEY: str
 
     # -------------------------
     # SMTP service
@@ -41,6 +42,15 @@ class Settings(BaseSettings):
     EMAIL_PASSWORD: str
     SMTP_SERVER: str
     SMTP_PORT: int
+
+
+    
+    # -------------------------
+    # AI Config
+    # -------------------------
+    NVIDIA_API_KEY: str
+    NVIDIA_BASE_URL: str
+    NVIDIA_MODEL_NAME: str
 
     # -------------------------
     # Pydantic Config (v2 style)

@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -24,6 +25,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -34,10 +36,22 @@ class ApiClient {
     }
 
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+      const response = await fetch(url, { ...options, headers });
+
+      // ✅ FIXED 401 HANDLING (avoid login race condition)
+      if (response.status === 401 && typeof window !== 'undefined') {
+        const token = localStorage.getItem('auth_token');
+
+        if (token) {
+          localStorage.removeItem('auth_token');
+          document.cookie =
+            'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+          if (!window.location.pathname.startsWith('/auth')) {
+            window.location.href = '/auth/login';
+          }
+        }
+      }
 
       const data = await response.json();
 
@@ -53,7 +67,7 @@ class ApiClient {
         data: data.data !== undefined ? data.data : data,
       };
     } catch (error) {
-      console.error('[v0] API request error:', error);
+      console.error('[API ERROR]:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Network error',
@@ -79,6 +93,13 @@ class ApiClient {
     });
   }
 
+  async patch<T>(endpoint: string, body: unknown) {
+  return this.request<T>(endpoint, {
+    method: 'PATCH',
+    body: JSON.stringify(body),
+  });
+}
+
   async delete<T>(endpoint: string) {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
@@ -86,34 +107,18 @@ class ApiClient {
 
 export const apiClient = new ApiClient(API_BASE_URL);
 
-// Auth endpoints
+// --- APIs ---
 export const authApi = {
-  register: (data: { 
-    email: string; 
-    password: string; 
-    full_name: string; 
-    consent: { data_collection: boolean; ai_training: boolean } 
-  }) => apiClient.post('/auth/register', data),
+  register: (data: any) => apiClient.post('/auth/register', data),
   login: (email: string, password: string) =>
     apiClient.post('/auth/login', { email, password }),
   logout: () => {
     apiClient.setToken(null);
-    localStorage.removeItem('token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+    }
   },
   verifyToken: () => apiClient.get('/auth/verify'),
-  requestPasswordReset: (email: string) =>
-    apiClient.post('/auth/request-password-reset', { email }),
-  resetPassword: (token: string, password: string) =>
-    apiClient.post('/auth/reset-password', { 
-      token, 
-      new_password: password 
-    }),
-};
-
-// User endpoints
-export const userApi = {
-  getProfile: () => apiClient.get('/users/me'),
-  updateProfile: (data: unknown) => apiClient.put('/users/me', data),
 };
 
 // Mood endpoints
@@ -126,16 +131,32 @@ export const moodApi = {
     apiClient.get(`/moods/analytics${days ? `?days=${days}` : ''}`),
 };
 
-// Journal endpoints
+
 export const journalApi = {
-  getEntries: (limit?: number, offset?: number) =>
-    apiClient.get(`/journal${limit ? `?limit=${limit}&offset=${offset || 0}` : ''}`),
+  // ✅ GET ALL
+  getEntries: (limit?: number, skip?: number) => {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    if (skip) params.append('skip', skip.toString());
+    const queryString = params.toString();
+    return apiClient.get(`/journal/${queryString ? `?${queryString}` : ''}`);
+  },
+
+  // ✅ CREATE
   createEntry: (title: string, content: string) =>
-    apiClient.post('/journal', { title, content }),
-  updateEntry: (id: string, data: unknown) =>
-    apiClient.put(`/journal/${id}`, data),
-  deleteEntry: (id: string) => apiClient.delete(`/journal/${id}`),
-  getPrompt: () => apiClient.get('/journal/prompt'),
+    apiClient.post('/journal/', { title, content }),
+
+  // ✅ UPDATE (PATCH, not PUT)
+  updateEntry: (id: string, data: any) =>
+    apiClient.patch(`/journal/${id}`, data),
+
+  // ✅ DELETE
+  deleteEntry: (id: string) =>
+    apiClient.delete(`/journal/${id}`),
+
+  // ✅ GET SINGLE (optional but useful)
+  getEntryById: (id: string) =>
+    apiClient.get(`/journal/${id}`),
 };
 
 // Chat endpoints

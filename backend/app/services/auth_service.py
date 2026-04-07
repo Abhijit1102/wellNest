@@ -1,14 +1,17 @@
 from app.models.user import User
 from app.schemas.auth import UserCreate
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_access_token, decode_access_token
 from app.core.database import mongodb
 from bson import ObjectId
 from datetime import datetime, timedelta
 from app.config import settings
+from fastapi import HTTPException, status
 
 
 async def create_user(user_in: UserCreate) -> User:
     users_col = mongodb.get_collection("users")
+
+    now = datetime.now()
     
     # Prepare the document for MongoDB
     user_dict = {
@@ -19,8 +22,8 @@ async def create_user(user_in: UserCreate) -> User:
         "is_active": True,
         "profile": user_in.profile.model_dump() if user_in.profile else {"timezone": "UTC"},
         "consent": user_in.consent.model_dump(), # Storing the UI consent
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "created_at": now,
+        "updated_at": now
     }
     
     result = await users_col.insert_one(user_dict)
@@ -37,12 +40,34 @@ async def get_user_by_email(email: str):
 
 async def authenticate_user(email: str, password: str):
     users_col = mongodb.get_collection("users")
-    user_doc = await users_col.find_one({"email": email})
+
+    user_doc = await users_col.find_one({"email": email.lower()})
     if not user_doc:
         return False
+
     user = User(**user_doc)
+
+    # ❌ Wrong password
     if not verify_password(password, user.password_hash):
         return False
+
+    # ✅ Update last_login in DB using user_doc
+    now = datetime.now()
+
+    await users_col.update_one(
+        {"_id": user_doc["_id"]},
+        {
+            "$set": {
+                "last_login": now,
+                "updated_at": now
+            }
+        }
+    )
+
+    # ✅ Update in-memory object (VERY IMPORTANT)
+    user.last_login = now
+    user.updated_at = now
+
     return user
 
 
@@ -52,11 +77,41 @@ async def create_user_token(user: User):
     return token
 
 
+async def get_current_user(token: str) -> User:
+    payload = decode_access_token(token)
+
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+    
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload"
+        )
+
+    users_col = mongodb.get_collection("users")
+
+    user_doc = await users_col.find_one({
+        "_id": ObjectId(user_id)
+    })
+
+    if not user_doc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found"
+        )
+
+    return User(**user_doc)
+
 async def generate_password_reset_token(user: User):
     payload = {
         "sub": str(user.id),
         "email": user.email,
-        "exp": datetime.utcnow() + timedelta(minutes=settings.RESET_TOKEN_EXPIRY_MINUTES),
+        "exp": datetime.now() + timedelta(minutes=settings.RESET_TOKEN_EXPIRY_MINUTES),
     }
     return create_access_token(payload)
 

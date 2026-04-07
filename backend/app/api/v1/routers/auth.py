@@ -1,10 +1,11 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, APIRouter, Header, Depends, HTTPException
 from datetime import datetime
 
 from app.core.responses import success_response
 from app.core.logging import get_logger
 from app.models.status import HTTPStatus
 from app.models.apiError import ApiError
+from app.core.security import decode_access_token
 
 from app.schemas import UserCreate, UserLogin, PasswordResetRequest, PasswordResetConfirm
 
@@ -15,6 +16,7 @@ from app.services.auth_service import (
     get_user_by_email,
     generate_password_reset_token,
     reset_password,
+    get_current_user
 )
 
 from app.services.email_service import send_reset_password_email
@@ -81,7 +83,26 @@ async def login(user: UserLogin):
         status_code=HTTPStatus.OK,
     )
 
-
+# -----------------------------
+# ✅ VERIFY TOKEN (Used by Next.js proxy.ts)
+# -----------------------------
+@router.get("/verify")
+async def verify_token(authorization: str = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    token = authorization.split(" ")[1]
+    user = await get_current_user(token)
+    
+    if not user:
+        # This is exactly what triggers the Next.js Proxy redirect
+        raise HTTPException(status_code=401, detail="User session expired or user deleted")
+        
+    return success_response(
+        message="Token valid",
+        data={"id": str(user.id), "email": user.email},
+        status_code=HTTPStatus.OK
+    )
 # -----------------------------
 # ✅ REQUEST PASSWORD RESET
 # -----------------------------
