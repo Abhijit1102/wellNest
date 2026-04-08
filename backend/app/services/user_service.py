@@ -15,8 +15,8 @@ class UserService:
     async def update_user(self, user_id: str, data: dict):
         update_data = {}
 
-        # 🔹 Map frontend keys to DB fields
-        if "username" in data and data["username"]:
+        # 🔹 Map frontend/logic keys to DB fields
+        if "username" in data:
             update_data["full_name"] = data["username"]
 
         if "age" in data:
@@ -25,16 +25,19 @@ class UserService:
         if "timezone" in data:
             update_data["profile.timezone"] = data["timezone"]
 
+        # ✅ Added these to ensure Cloudinary data is actually saved
         if "avatar_url" in data:
             update_data["profile.avatar_url"] = data["avatar_url"]
+            
+        if "avatar_public_id" in data:
+            update_data["profile.avatar_public_id"] = data["avatar_public_id"]
 
         if not update_data:
             return None
 
-        # ✅ Set the ISO string for updated_at
         update_data["updated_at"] = get_iso_timestamp()
 
-        # ✅ Use ReturnDocument.AFTER to get the updated version of the user
+        # ✅ find_one_and_update is perfect here
         return await self.collection.find_one_and_update(
             {"_id": ObjectId(user_id)}, 
             {"$set": update_data}, 

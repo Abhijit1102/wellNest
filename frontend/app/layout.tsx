@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Playfair_Display, Roboto_Condensed, Lobster_Two } from 'next/font/google'
+import { Geist, Geist_Mono, Playfair_Display, Roboto_Condensed, Lobster_Two, Merriweather } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
-const playfairDisplay = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"] });
-const robotoCondensed = Roboto_Condensed({ subsets: ["latin"], weight: ["100", "300", "400", "700", "900"] });
-const lobsterTwo = Lobster_Two({ subsets: ["latin"], weight: ["400", "700"] });
+const playfairDisplay = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"], variable: '--font-playfair' });
+const robotoCondensed = Roboto_Condensed({ subsets: ["latin"], weight: ["100", "300", "400", "700", "900"], variable: '--font-roboto-condensed' });
+const lobsterTwo = Lobster_Two({ subsets: ["latin"], weight: ["400", "700"], variable: '--font-lobster' });
+const merriweather = Merriweather({ subsets: ["latin"], weight: ["300", "400", "700", "900"], variable: '--font-merriweather' });
 
 export const metadata: Metadata = {
   title: 'WellNest - AI Mental Health Companion',
@@ -38,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${playfairDisplay.variable} ${robotoCondensed.variable} ${lobsterTwo.variable} ${merriweather.variable}`}>
       <body className={`${playfairDisplay.className} font-sans antialiased`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}

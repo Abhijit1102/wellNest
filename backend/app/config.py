@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     NVIDIA_MODEL_NAME: str
 
     # -------------------------
+    # AI Config
+    # -------------------------
+    CLOUDINARY_API_KEY:str
+    CLOUDINARY_API_SECRET : str
+    CLOUDINARY_API_CLOUD_NAME : str
+
+    # -------------------------
     # Pydantic Config (v2 style)
     # -------------------------
     model_config = SettingsConfigDict(

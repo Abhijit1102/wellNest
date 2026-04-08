@@ -8,3 +8,5 @@ argon2-cffi
 passlib
 cryptography
 langchain-openai
+tzlocal
+cloudinary

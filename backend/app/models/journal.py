@@ -38,7 +38,7 @@ class PyObjectId(ObjectId):
 
 # 2. Define the Journal Entry Model
 class JournalEntry(BaseModel):
-    id: Optional[PyObjectId] = Field(alias="_id", default=None)
+    id: PyObjectId = Field(alias="_id", default=None)
     user_id: PyObjectId = Field(...)
     title: Optional[str] = Field(default=None, max_length=200)
     content: str

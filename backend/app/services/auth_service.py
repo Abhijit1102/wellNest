@@ -1,5 +1,6 @@
 from app.models.user import User
 from app.schemas.auth import UserCreate
+from app.core.time_zone import get_localzone
 from app.core.security import (
     hash_password,
     verify_password,
@@ -26,7 +27,7 @@ async def create_user(user_in: UserCreate) -> User:
         "password_hash": hash_password(user_in.password),
         "role": "user",
         "is_active": True,
-        "profile": user_in.profile.model_dump() if user_in.profile else {"timezone": "UTC"},
+        "profile": user_in.profile.model_dump() if user_in.profile else {"timezone": str(get_localzone())},
         "consent": user_in.consent.model_dump(),
         "created_at": now_iso,
         "updated_at": now_iso,

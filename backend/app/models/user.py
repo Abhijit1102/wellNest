@@ -1,10 +1,9 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import Optional, Any
-from datetime import datetime
 from bson import ObjectId
 from pydantic_core import core_schema
 from app.schemas.user import UserRole
-from app.core.time_zone import get_iso_timestamp
+from app.core.time_zone import get_iso_timestamp, get_timezone
 
 
 class PyObjectId(ObjectId):
@@ -42,7 +41,7 @@ class PyObjectId(ObjectId):
 
 class UserProfile(BaseModel):
     age: Optional[int] = None
-    timezone: Optional[str] = "UTC"
+    timezone: str = Field(default_factory=get_timezone)
     avatar_url: Optional[str] = None
 
 

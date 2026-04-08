@@ -1,13 +1,28 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, Form
+from typing import Optional
+
+from fastapi import APIRouter, Depends, UploadFile, File, Form, Request
+from typing import Optional
 from app.core.responses import success_response
 from app.models.status import HTTPStatus
-from app.schemas.user_profile import UserUpdate
 from app.dependencies import get_current_user
 from app.services.user_service import user_service
 from app.models.user import User
+from app.core.time_zone import get_iso_timestamp
+from app.services.cloudinary_service import upload_image_to_cloudinary
 
 router = APIRouter(tags=["users"])
 
+class UserUpdateForm:
+    def __init__(
+        self,
+        username: Optional[str] = Form(None),
+        age: Optional[int] = Form(None, ge=0, le=120),
+        file: Optional[UploadFile] = File(None),
+    ):
+        self.username = username
+        self.age = age
+        self.file = file
 
 # -----------------------------
 # ✅ GET PROFILE
@@ -20,7 +35,9 @@ async def get_profile(current_user: User = Depends(get_current_user)):
             "id": str(current_user.id),
             "email": current_user.email,
             "full_name": current_user.full_name,
-            "profile": current_user.profile.model_dump(),
+            "profile": current_user.profile.model_dump()
+            if current_user.profile
+            else {},
             "created_at": current_user.created_at.isoformat(),
         },
         status_code=HTTPStatus.OK,
@@ -32,24 +49,44 @@ async def get_profile(current_user: User = Depends(get_current_user)):
 # -----------------------------
 @router.put("/me")
 async def update_profile(
-    payload: UserUpdate,
+    request: Request,
+    form: UserUpdateForm = Depends(),
     current_user: User = Depends(get_current_user),
 ):
-    updated_user = await user_service.update_user(
-        str(current_user.id), payload.model_dump(exclude_unset=True)
-    )
+    # --- DEBUGGING LINE: Check your console to see if data arrives ---
+    print(f"DEBUG: Raw Form Data: {await request.form()}")
+    
+    update_data = {}
 
-    if not updated_user:
-        return success_response(message="No changes made", data={}, status_code=HTTPStatus.OK)
+    print(form.username)
+
+    if form.username:
+        update_data["username"] = form.username.strip()
+
+    if form.age is not None:
+        update_data["age"] = form.age
+
+    if form.file:
+        try:
+            avatar_url, public_id = await upload_image_to_cloudinary(form.file)
+            update_data["avatar_url"] = avatar_url
+            update_data["avatar_public_id"] = public_id
+        except Exception as e:
+            print(f"Upload error: {e}")
+            return success_response(message="Image upload failed", status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    if not update_data:
+        return success_response(message="No changes provided", status_code=HTTPStatus.OK)
+
+    updated_user = await user_service.update_user(str(current_user.id), update_data)
 
     return success_response(
         message="Profile updated successfully",
         data={
             "id": str(updated_user["_id"]),
-            "email": updated_user["email"],
-            "full_name": updated_user["full_name"],
+            "full_name": updated_user.get("full_name"),
             "profile": updated_user.get("profile", {}),
-            "updated_at": updated_user["updated_at"].isoformat(),
+            "updated_at": updated_user.get("updated_at", get_iso_timestamp()),
         },
         status_code=HTTPStatus.OK,
     )

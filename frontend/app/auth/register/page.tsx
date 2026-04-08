@@ -101,11 +101,6 @@ export default function RegisterPage() {
           <Leaf className="w-8 h-8 text-primary" />
           <h1 className="text-2xl font-bold text-foreground font-playfair">WellNest</h1>
         </div>
-          <div className="flex items-center gap-2">
-            <Leaf className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">WellNest</span>
-          </div>
-        </div>
 
         <Card className="border-primary/20">
           <CardHeader className="space-y-1">

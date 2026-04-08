@@ -24,14 +24,18 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    isFormData: boolean = false
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
 
-    const headers: Record<string, string> = {
+    const headers: Record<string, string> = isFormData ? {} : {
       'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
     };
+    
+    if (options.headers) {
+      Object.assign(headers, options.headers as Record<string, string>);
+    }
 
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
@@ -82,17 +86,19 @@ class ApiClient {
   }
 
   async post<T>(endpoint: string, body: unknown) {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify(body),
-    });
+      body: isFormData ? body : JSON.stringify(body),
+    }, isFormData);
   }
 
   async put<T>(endpoint: string, body: unknown) {
+    const isFormData = body instanceof FormData;
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: JSON.stringify(body),
-    });
+      body: isFormData ? body : JSON.stringify(body),
+    }, isFormData);
   }
 
   async patch<T>(endpoint: string, body: unknown) {
@@ -125,7 +131,9 @@ export const authApi = {
 
 export const userApi = {
   getProfile: () => apiClient.get('/users/me'),
-  updateProfile: (data: unknown) => apiClient.put('/users/me', data),
+
+  updateProfile: (formData: FormData) =>
+    apiClient.put('/users/me', formData),
 };
 
 // Mood endpoints

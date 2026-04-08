@@ -45,7 +45,7 @@ NotesStr = Annotated[Optional[str], Field(max_length=500)]
 class MoodLog(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     user_id: PyObjectId = Field(...)
-    date: str = Field(...)  # Start of day UTC
+    date: str =  Field(default_factory=get_iso_timestamp)
     mood_score: MoodScore = Field(...)
     emotions: Optional[List[ShortStr]] = Field(default_factory=list)
     energy_level: EnergyLevel = None
