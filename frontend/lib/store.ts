@@ -156,11 +156,12 @@ export const initializeAuth = async () => {
             id: res.data.id,
             email: res.data.email,
             full_name: res.data.full_name,
+            profile: res.data.profile,
             created_at: res.data.created_at,
             updated_at: res.data.updated_at,
-        };
+          };
 
-        useAuthStore.getState().setUser(res.data as User);
+          useAuthStore.getState().setUser(user);
 
         } else {
           useAuthStore.getState().setToken(null);

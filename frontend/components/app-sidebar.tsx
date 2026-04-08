@@ -81,11 +81,19 @@ export function AppSidebar() {
               variant="ghost"
               className="w-full justify-start gap-3 px-4 py-6 h-auto"
             >
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-semibold text-primary-foreground">
-                  {user?.full_name?.[0]?.toUpperCase() || 'U'}
-                </span>
-              </div>
+              {user?.profile?.avatar_url ? (
+                <img
+                  src={user.profile.avatar_url}
+                  alt={user.full_name}
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-semibold text-primary-foreground">
+                    {user?.full_name?.[0]?.toUpperCase() || 'U'}
+                  </span>
+                </div>
+              )}
               <div className="flex-1 text-left min-w-0">
                 <p className="font-medium text-sm truncate text-foreground">{user?.full_name}</p>
                 <p className="text-xs truncate text-muted-foreground">{user?.email}</p>

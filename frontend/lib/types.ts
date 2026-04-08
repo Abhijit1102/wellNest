@@ -1,8 +1,16 @@
 // Auth types
+export interface UserProfile {
+  age?: number;
+  timezone?: string;
+  avatar_url?: string;
+}
+
 export interface User {
   id: string;
   email: string;
   full_name?: string;
+  profile?: UserProfile;
+  profile_image?: string; // Fallback for backward compatibility
   created_at?: string;   
   updated_at?: string;  
 }

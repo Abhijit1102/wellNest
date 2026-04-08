@@ -76,7 +76,8 @@ async def login(user: UserLogin):
             "user": {
                 "id": str(auth_user.id),
                 "email": auth_user.email,
-                "username": auth_user.full_name,
+                "full_name": auth_user.full_name,
+                "profile": auth_user.profile.model_dump() if auth_user.profile else {},
             },
         },
         status_code=HTTPStatus.OK,
@@ -101,8 +102,9 @@ async def verify_token(authorization: str = Header(None)):
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
-        "created_at": user.created_at,  # No more .isoformat()
-        "updated_at": user.updated_at,  # No more .isoformat()
+        "profile": user.profile.model_dump() if user.profile else {},
+        "created_at": user.created_at,
+        "updated_at": user.updated_at,
     }
 
     return success_response(message="Token valid", data=data, status_code=HTTPStatus.OK)
