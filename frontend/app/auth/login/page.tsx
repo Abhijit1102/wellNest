@@ -53,7 +53,7 @@ export default function LoginPage() {
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
             <Leaf className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">
+            <span className="text-2xl font-bold text-foreground font-playfair">
               WellNest
             </span>
           </div>
@@ -61,8 +61,8 @@ export default function LoginPage() {
 
         <Card className="border-primary/20">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-playfair">Welcome back</CardTitle>
+            <CardDescription className="font-roboto-condensed">
               Sign in to your mental wellness journey
             </CardDescription>
           </CardHeader>

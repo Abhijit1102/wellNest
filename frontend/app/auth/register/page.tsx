@@ -97,7 +97,10 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         
         {/* Branding */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-8 gap-2 items-center">
+          <Leaf className="w-8 h-8 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground font-playfair">WellNest</h1>
+        </div>
           <div className="flex items-center gap-2">
             <Leaf className="w-8 h-8 text-primary" />
             <span className="text-2xl font-bold text-foreground">WellNest</span>
@@ -106,8 +109,8 @@ export default function RegisterPage() {
 
         <Card className="border-primary/20">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl">Create your account</CardTitle>
-            <CardDescription>Start your mental wellness journey with WellNest</CardDescription>
+            <CardTitle className="text-2xl font-playfair">Create your account</CardTitle>
+            <CardDescription className="font-roboto-condensed">Start your mental wellness journey with WellNest</CardDescription>
           </CardHeader>
 
           <CardContent>

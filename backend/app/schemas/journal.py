@@ -13,3 +13,6 @@ class JournalUpdate(BaseModel):
     content: Optional[str] = None
     tags: Optional[List[str]] = None
     is_favorite: Optional[bool] = None
+
+class FavoriteUpdate(BaseModel):
+    is_favorite: bool    

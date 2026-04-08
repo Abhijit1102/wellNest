@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Geist, Geist_Mono, Playfair_Display, Roboto_Condensed, Lobster_Two } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const playfairDisplay = Playfair_Display({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800", "900"] });
+const robotoCondensed = Roboto_Condensed({ subsets: ["latin"], weight: ["100", "300", "400", "700", "900"] });
+const lobsterTwo = Lobster_Two({ subsets: ["latin"], weight: ["400", "700"] });
 
 export const metadata: Metadata = {
   title: 'WellNest - AI Mental Health Companion',
@@ -36,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-sans antialiased">
+      <body className={`${playfairDisplay.className} font-sans antialiased`}>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

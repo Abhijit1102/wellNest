@@ -160,6 +160,10 @@ export const journalApi = {
   updateEntry: (id: string, data: any) =>
     apiClient.patch(`/journal/${id}`, data),
 
+  // ✅ TOGGLE FAVORITE
+  toggleFavorite: (id: string, is_favorite: boolean) =>
+    apiClient.patch(`/journal/${id}/favorite`, { is_favorite }),
+
   // ✅ DELETE
   deleteEntry: (id: string) =>
     apiClient.delete(`/journal/${id}`),

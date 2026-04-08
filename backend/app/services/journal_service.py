@@ -111,6 +111,31 @@ class JournalService:
             
         updated_doc["id"] = str(updated_doc.pop("_id"))
         return JournalEntry(**updated_doc)
+    
+    # Inside JournalService class
+    async def toggle_favorite(self, journal_id: str, user_id: ObjectId, is_favorite: bool):
+        updated_doc = await self.collection.find_one_and_update(
+            {"_id": ObjectId(journal_id), "user_id": str(user_id)},
+            {
+                "$set": {
+                    "is_favorite": is_favorite,
+                    "updated_at": get_iso_timestamp()
+                }
+            },
+            return_document=ReturnDocument.AFTER,
+        )
+        
+        if not updated_doc:
+            return None
+
+        # Decrypt content so the return object is complete
+        try:
+            updated_doc["content"] = await decrypt_text(updated_doc["content"])
+        except Exception:
+            updated_doc["content"] = "[Decryption Error]"
+            
+        updated_doc["id"] = str(updated_doc.pop("_id"))
+        return JournalEntry(**updated_doc)
 
     # ✅ GET SINGLE
     async def get_journal_by_id(self, journal_id: str, user_id: ObjectId):

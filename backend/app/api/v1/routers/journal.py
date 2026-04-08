@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, BackgroundTasks
 from app.core.responses import success_response
 from app.models.status import HTTPStatus
 from app.models.apiError import ApiError
-from app.schemas.journal import JournalCreate, JournalUpdate
+from app.schemas.journal import JournalCreate, JournalUpdate, FavoriteUpdate
 from app.services.journal_service import journal_service
 from app.dependencies import get_current_user
 
@@ -55,6 +55,31 @@ async def update_entry(
         )
 
     return success_response(message="Updated successfully", data=updated_entry)
+
+
+# ✅ TOGGLE FAVORITE
+@router.patch("/{journal_id}/favorite")
+async def toggle_journal_favorite(
+    journal_id: str,
+    payload: FavoriteUpdate,
+    current_user=Depends(get_current_user)
+):
+    updated_entry = await journal_service.toggle_favorite(
+        journal_id=journal_id,
+        user_id=current_user.id,
+        is_favorite=payload.is_favorite
+    )
+
+    if not updated_entry:
+        raise ApiError(
+            status_code=HTTPStatus.NOT_FOUND, 
+            message="Entry not found"
+        )
+
+    return success_response(
+        message="Favorite status updated", 
+        data=updated_entry
+    )
 
 
 # ✅ DELETE
