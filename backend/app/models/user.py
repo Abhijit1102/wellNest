@@ -4,7 +4,7 @@ from datetime import datetime
 from bson import ObjectId
 from pydantic_core import core_schema
 from app.schemas.user import UserRole
-from app.core.time_zone import get_utc_now
+from app.core.time_zone import get_iso_timestamp
 
 
 class PyObjectId(ObjectId):
@@ -64,9 +64,9 @@ class User(BaseModel):
     is_active: bool = True
     profile: UserProfile = Field(default_factory=UserProfile)
     consent: UserConsent
-    created_at: datetime = Field(default_factory=get_utc_now)
-    updated_at: datetime = Field(default_factory=get_utc_now)
-    last_login: datetime = Field(default_factory=get_utc_now)
+    created_at: str = Field(default_factory=get_iso_timestamp)
+    updated_at: str = Field(default_factory=get_iso_timestamp)
+    last_login: str = Field(default_factory=get_iso_timestamp)
 
     model_config = ConfigDict(
         populate_by_name=True,

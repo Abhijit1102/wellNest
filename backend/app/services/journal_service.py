@@ -1,18 +1,17 @@
+import logging
 from bson import ObjectId
 from pymongo import ReturnDocument
-import logging
-from app.core.time_zone import get_utc_now
 from fastapi import BackgroundTasks
 
 from app.core.database import mongodb
 from app.models.journal import JournalEntry
 from app.schemas.journal import JournalCreate, JournalUpdate
+from app.core.time_zone import get_iso_timestamp
 from app.core.decoder_encoder import encrypt_text, decrypt_text
 from app.services.ai_service.journal_generation import generate_structured_journal
 from app.services.background_task.create_mood_log_from_journal import create_mood_log_from_journal
 
 logger = logging.getLogger(__name__)
-
 
 class JournalService:
     @property
@@ -23,39 +22,40 @@ class JournalService:
     async def create_journal(
         self, user_id: ObjectId, data: JournalCreate, background_tasks: BackgroundTasks
     ):
-        # Generate structured journal content
         structured_data = generate_structured_journal(
-            content=data.content, title=data.title if hasattr(data, "title") else None
+            content=data.content, 
+            title=getattr(data, "title", None)
         )
 
-        # Encrypt content before storing
         encrypted_content = await encrypt_text(structured_data.content)
 
         entry_model = JournalEntry(
-            user_id=user_id,
+            user_id=str(user_id), # Standardizing as string
             content=encrypted_content,
             **structured_data.model_dump(exclude={'content'}),
         )
 
         new_entry_dict = entry_model.model_dump(by_alias=True, exclude_none=True)
         result = await self.collection.insert_one(new_entry_dict)
+        
         entry_model.id = result.inserted_id
+        # Return plain text to the user so they see what they just wrote
         entry_model.content = structured_data.content
 
-        # Schedule MoodLog creation in background
         background_tasks.add_task(
             create_mood_log_from_journal,
-            user_id=user_id,
-            title=data.title if hasattr(data, "title") else "",
+            user_id=str(user_id),
+            title=getattr(data, "title", ""),
             content=data.content,
         )
 
         return entry_model
 
-    # ✅ GET ALL (FIXED LOGIC)
+    # ✅ GET ALL
     async def get_user_journals(self, user_id: ObjectId, limit: int = 50, skip: int = 0):
+        query = {"user_id": str(user_id)}
         cursor = (
-            self.collection.find({"user_id": user_id})
+            self.collection.find(query)
             .sort("created_at", -1)
             .skip(skip)
             .limit(limit)
@@ -65,40 +65,21 @@ class JournalService:
         result = []
         for entry in entries:
             try:
-                # Decrypt content safely
+                # Decrypt content with safety fallback
                 try:
                     entry["content"] = await decrypt_text(entry["content"])
-                except Exception as e:
-                    logger.error(f"Decryption failed for {entry['_id']}: {e}")
-                    entry["content"] = "[Encrypted Content - Decryption Error]"
+                except Exception:
+                    entry["content"] = "[Decryption Error]"
 
-                # Convert Mongo ObjectIds to strings
-                entry["id"] = str(entry["_id"])
-                entry["user_id"] = str(entry["user_id"])
-                entry.pop("_id", None)
-
-                # Pass to Pydantic
+                # Map _id to id for Pydantic
+                entry["id"] = str(entry.pop("_id"))
                 result.append(JournalEntry(**entry))
             except Exception as e:
-                print(f"❌ VALIDATION ERROR for entry {entry.get('_id')}: {e}")
+                logger.error(f"❌ VALIDATION ERROR for entry {entry.get('id')}: {e}")
                 continue
 
-        total = await self.collection.count_documents({"user_id": user_id})
+        total = await self.collection.count_documents(query)
         return result, total
-
-    # ✅ GET SINGLE
-    async def get_journal_by_id(self, journal_id: str, user_id: ObjectId):
-        try:
-            entry = await self.collection.find_one(
-                {"_id": ObjectId(journal_id), "user_id": user_id}
-            )
-            if not entry:
-                return None
-
-            entry["content"] = await decrypt_text(entry["content"])
-            return JournalEntry(**entry)
-        except Exception:
-            return None
 
     # ✅ UPDATE
     async def update_journal(self, journal_id: str, user_id: ObjectId, data: JournalUpdate):
@@ -107,30 +88,51 @@ class JournalService:
             return None
 
         if "content" in update_data:
-            update_data["content"] = await encrypt_text(update_data["content"])
+            # We encrypt the content for storage
+            raw_content = update_data["content"]
+            update_data["content"] = await encrypt_text(raw_content)
 
-        update_data["updated_at"] = get_utc_now()
+        update_data["updated_at"] = get_iso_timestamp()
 
         updated_doc = await self.collection.find_one_and_update(
-            {"_id": ObjectId(journal_id), "user_id": user_id},
+            {"_id": ObjectId(journal_id), "user_id": str(user_id)},
             {"$set": update_data},
             return_document=ReturnDocument.AFTER,
         )
+        
         if not updated_doc:
             return None
 
-        updated_doc["content"] = await decrypt_text(updated_doc["content"])
+        # Return with decrypted content
+        try:
+            updated_doc["content"] = await decrypt_text(updated_doc["content"])
+        except Exception:
+            updated_doc["content"] = "[Decryption Error]"
+            
+        updated_doc["id"] = str(updated_doc.pop("_id"))
         return JournalEntry(**updated_doc)
+
+    # ✅ GET SINGLE
+    async def get_journal_by_id(self, journal_id: str, user_id: ObjectId):
+        entry = await self.collection.find_one(
+            {"_id": ObjectId(journal_id), "user_id": str(user_id)}
+        )
+        if not entry:
+            return None
+            
+        try:
+            entry["content"] = await decrypt_text(entry["content"])
+        except Exception:
+            entry["content"] = "[Decryption Error]"
+
+        entry["id"] = str(entry.pop("_id"))
+        return JournalEntry(**entry)
 
     # ✅ DELETE
     async def delete_journal(self, journal_id: str, user_id: ObjectId):
-        try:
-            result = await self.collection.delete_one(
-                {"_id": ObjectId(journal_id), "user_id": user_id}
-            )
-            return result.deleted_count > 0
-        except Exception:
-            return False
-
+        result = await self.collection.delete_one(
+            {"_id": ObjectId(journal_id), "user_id": str(user_id)}
+        )
+        return result.deleted_count > 0
 
 journal_service = JournalService()

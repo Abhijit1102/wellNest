@@ -3,8 +3,7 @@ from pydantic_core import core_schema
 from typing import Optional, List, Any
 from datetime import datetime
 from bson import ObjectId
-from app.core.time_zone import get_utc_now
-
+from app.core.time_zone import get_iso_timestamp
 
 # 1. Define the helper class to handle MongoDB ObjectIds
 class PyObjectId(ObjectId):
@@ -46,8 +45,8 @@ class JournalEntry(BaseModel):
     tags: List[str] = Field(default_factory=list)
     sentiment_score: Optional[float] = Field(None, ge=-1.0, le=1.0)
     is_favorite: bool = False
-    created_at: datetime = Field(default_factory=get_utc_now)
-    updated_at: datetime = Field(default_factory=get_utc_now)
+    created_at: str = Field(default_factory=get_iso_timestamp)
+    updated_at: str = Field(default_factory=get_iso_timestamp)
 
     model_config = ConfigDict(
         populate_by_name=True,  # Important: Allows using 'id' or '_id'

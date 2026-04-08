@@ -1,7 +1,7 @@
 from bson import ObjectId
+from pymongo import ReturnDocument
 from app.core.database import mongodb
-from app.core.time_zone import get_utc_now
-
+from app.core.time_zone import get_iso_timestamp  
 
 class UserService:
     @property
@@ -9,12 +9,13 @@ class UserService:
         return mongodb.get_collection("users")
 
     async def get_user_by_id(self, user_id: str):
+        # Always return the document directly; Pydantic can handle the conversion later
         return await self.collection.find_one({"_id": ObjectId(user_id)})
 
     async def update_user(self, user_id: str, data: dict):
         update_data = {}
 
-        # Map frontend -> DB fields
+        # 🔹 Map frontend keys to DB fields
         if "username" in data and data["username"]:
             update_data["full_name"] = data["username"]
 
@@ -30,11 +31,14 @@ class UserService:
         if not update_data:
             return None
 
-        update_data["updated_at"] = get_utc_now()
+        # ✅ Set the ISO string for updated_at
+        update_data["updated_at"] = get_iso_timestamp()
 
+        # ✅ Use ReturnDocument.AFTER to get the updated version of the user
         return await self.collection.find_one_and_update(
-            {"_id": ObjectId(user_id)}, {"$set": update_data}, return_document=True
+            {"_id": ObjectId(user_id)}, 
+            {"$set": update_data}, 
+            return_document=ReturnDocument.AFTER
         )
-
 
 user_service = UserService()

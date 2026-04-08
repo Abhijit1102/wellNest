@@ -95,18 +95,17 @@ async def verify_token(authorization: str = Header(None)):
     user = await get_current_user(token)
 
     if not user:
-        # This is exactly what triggers the Next.js Proxy redirect
         raise HTTPException(status_code=401, detail="User session expired or user deleted")
+    
     data = {
         "id": str(user.id),
         "email": user.email,
         "full_name": user.full_name,
-        "created_at": user.created_at.isoformat(),
-        "updated_at": user.updated_at.isoformat(),
+        "created_at": user.created_at,  # No more .isoformat()
+        "updated_at": user.updated_at,  # No more .isoformat()
     }
 
     return success_response(message="Token valid", data=data, status_code=HTTPStatus.OK)
-
 
 # -----------------------------
 # ✅ REQUEST PASSWORD RESET

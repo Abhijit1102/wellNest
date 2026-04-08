@@ -1,6 +1,6 @@
 from bson import ObjectId
-from datetime import timedelta
-from app.core.time_zone import get_utc_now
+from datetime import datetime, timedelta
+from app.core.time_zone import get_iso_timestamp, get_iso_date_before
 from app.core.database import mongodb
 
 
@@ -17,12 +17,10 @@ class AnalyticsService:
     async def get_summary(self, user_id: ObjectId, days: int = 30):
         user_id = ObjectId(user_id)
 
-        start_date = get_utc_now() - timedelta(days=days)
+        start_date_str = get_iso_date_before(days)
 
         # 🔹 Common match filter
-        match_filter = {"user_id": user_id, "date": {"$gte": start_date}}
-
-        print("DEBUG FILTER:", match_filter)
+        match_filter = {"user_id": str(user_id), "date": {"$gte": start_date_str}}
 
         # 1️⃣ Total Mood Entries
         total_moods = await self.mood_collection.count_documents(match_filter)
@@ -43,7 +41,7 @@ class AnalyticsService:
             {"$match": match_filter},
             {
                 "$group": {
-                    "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$date"}},
+                    "_id": {"$substr": ["$date", 0, 10]}, # Extracts YYYY-MM-DD from ISO string
                     "value": {"$avg": "$mood_score"},
                 }
             },
@@ -77,61 +75,89 @@ class AnalyticsService:
 
     # ✅ GET EMOTION TRENDS
     async def get_emotion_trends(self, user_id: ObjectId, days: int = 30):
-        start_date = get_utc_now() - timedelta(days=days)
+        # ✅ Use the helper to get an ISO string (e.g., "2026-03-09T10:48:11Z")
+        start_date_iso = get_iso_date_before(days)
 
         pipeline = [
-            {"$match": {"user_id": user_id, "date": {"$gte": start_date}}},
+            {
+                "$match": {
+                    "user_id": str(user_id), 
+                    # ✅ Comparing String to String (ISO format)
+                    "date": {"$gte": start_date_iso}
+                }
+            },
             {"$unwind": "$emotions"},
             {"$group": {"_id": "$emotions", "count": {"$sum": 1}}},
             {"$sort": {"count": -1}},
         ]
 
         cursor = self.mood_collection.aggregate(pipeline)
-        results = [{"emotion": doc["_id"], "count": doc["count"]} async for doc in cursor]
+        
+        # Extract results from the cursor
+        results = [
+            {"emotion": doc["_id"], "count": doc["count"]} 
+            async for doc in cursor
+        ]
 
+        # Calculate percentages for the frontend
         total = sum(r["count"] for r in results)
         for r in results:
             r["percentage"] = round((r["count"] / total) * 100, 1) if total > 0 else 0
 
         return results
-
+    
     # ✅ GET STREAKS (Logic for consecutive days)
     async def get_streaks(self, user_id: ObjectId):
-        # Fetch all dates where user logged a mood
-        cursor = self.mood_collection.find({"user_id": user_id}, {"date": 1}).sort("date", -1)
-        dates = [doc["date"].date() async for doc in cursor]
-        dates = sorted(list(set(dates)), reverse=True)  # Unique sorted dates
+        # 1. Fetch dates as ISO strings
+        cursor = self.mood_collection.find(
+            {"user_id": str(user_id)}, 
+            {"date": 1}
+        ).sort("date", -1)
+        
+        # 2. Parse ISO strings to unique date objects
+        raw_dates = []
+        async for doc in cursor:
+            # Replace 'Z' with UTC offset for standard Python parsing
+            dt_str = doc["date"].replace("Z", "+00:00")
+            raw_dates.append(datetime.fromisoformat(dt_str).date())
+        
+        # Unique sorted dates (Newest to Oldest)
+        dates = sorted(list(set(raw_dates)), reverse=True)
 
         current_streak = 0
         longest_streak = 0
-        temp_streak = 0
 
         if dates:
-            today = today = get_utc_now().date()
-            # Check current streak
-            check_date = today
-            for d in dates:
-                if d == check_date:
-                    current_streak += 1
-                    check_date -= timedelta(days=1)
-                elif d == check_date - timedelta(days=1):
-                    continue  # Should not happen with unique set
-                else:
-                    if d < check_date:
+            # 3. Get 'Today' using your ISO utility logic
+            now_iso = get_iso_timestamp().replace("Z", "+00:00")
+            today = datetime.fromisoformat(now_iso).date()
+            yesterday = today - timedelta(days=1)
+
+            # 4. Calculate Current Streak
+            # A streak is valid if it starts today OR yesterday
+            if dates[0] == today or dates[0] == yesterday:
+                check_date = dates[0]
+                for d in dates:
+                    if d == check_date:
+                        current_streak += 1
+                        check_date -= timedelta(days=1)
+                    else:
                         break
 
-            # Calculate longest streak
-            if len(dates) > 0:
-                temp_streak = 1
-                for i in range(len(dates) - 1):
-                    if (dates[i] - dates[i + 1]).days == 1:
-                        temp_streak += 1
-                    else:
-                        longest_streak = max(longest_streak, temp_streak)
-                        temp_streak = 1
-                longest_streak = max(longest_streak, temp_streak)
+            # 5. Calculate Longest Streak (Standard logic)
+            temp_streak = 1
+            for i in range(len(dates) - 1):
+                if (dates[i] - dates[i + 1]).days == 1:
+                    temp_streak += 1
+                else:
+                    longest_streak = max(longest_streak, temp_streak)
+                    temp_streak = 1
+            longest_streak = max(longest_streak, temp_streak)
 
-        return [{"type": "mood", "current": current_streak, "longest": longest_streak}]
-
+        return [{
+            "type": "mood", 
+            "current": current_streak, 
+            "longest": longest_streak
+        }]
 
 analytics_service = AnalyticsService()

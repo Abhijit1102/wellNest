@@ -3,8 +3,7 @@ from typing import Optional, List, Any, Annotated
 from datetime import datetime
 from bson import ObjectId
 from pydantic_core import core_schema
-from app.core.time_zone import get_utc_now
-
+from app.core.time_zone import get_iso_timestamp
 
 # Helper class for MongoDB ObjectId
 class PyObjectId(ObjectId):
@@ -46,14 +45,14 @@ NotesStr = Annotated[Optional[str], Field(max_length=500)]
 class MoodLog(BaseModel):
     id: Optional[PyObjectId] = Field(alias="_id", default=None)
     user_id: PyObjectId = Field(...)
-    date: datetime = Field(...)  # Start of day UTC
+    date: str = Field(...)  # Start of day UTC
     mood_score: MoodScore = Field(...)
     emotions: Optional[List[ShortStr]] = Field(default_factory=list)
     energy_level: EnergyLevel = None
     sleep_hours: SleepHours = None
     activities: Optional[List[ShortStr]] = Field(default_factory=list)
     notes: NotesStr = None
-    created_at: datetime = Field(default_factory=get_utc_now)
+    created_at: str = Field(default_factory=get_iso_timestamp)
 
     model_config = ConfigDict(
         populate_by_name=True,

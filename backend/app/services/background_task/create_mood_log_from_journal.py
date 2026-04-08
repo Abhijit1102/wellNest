@@ -1,7 +1,7 @@
 from bson import ObjectId
 from app.models.mood_log import MoodLog
 from app.core.database import mongodb
-from app.core.time_zone import get_utc_now
+from app.core.time_zone import get_iso_timestamp
 from app.services.ai_service.mood_log_from_journal_generation import (
     generate_structured_mood_log_from_journal,
 )
@@ -17,7 +17,7 @@ async def create_mood_log_from_journal(user_id: ObjectId, title: str, content: s
     # Build MoodLog model
     entry_model = MoodLog(
         user_id=user_id,
-        date=get_utc_now(),
+        date=get_iso_timestamp(),
         mood_score=mood_data.mood_score,
         emotions=mood_data.emotions,
         energy_level=mood_data.energy_level,
