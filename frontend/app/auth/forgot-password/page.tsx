@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Leaf } from 'lucide-react';
+import { LogoSvg } from '@/components/LogoSvg';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
 import { authApi } from '@/lib/api';
 
@@ -43,8 +43,8 @@ export default function ForgotPasswordPage() {
         {/* ✅ Branding */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            <Leaf className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">WellNest</span>
+            <LogoSvg className="w-8 h-8" />
+            <span className="text-2xl font-bold text-foreground font-playfair">WellNest</span>
           </div>
         </div>
 
@@ -97,11 +97,11 @@ export default function ForgotPasswordPage() {
             ) : (
               <div className="space-y-4 text-center">
                 {/* ✅ Success box */}
-                <div className="rounded-lg bg-green-500/10 border border-green-500/30 p-4">
-                  <p className="text-sm text-foreground">
-                    ✅ Reset link sent to <strong>{email}</strong>
-                  </p>
-                </div>
+              <div className="rounded-lg bg-primary/10 border border-primary/30 p-4">
+                <p className="text-sm text-foreground">
+                  ✅ Reset link sent to <strong>{email}</strong>
+                </p>
+              </div>
 
                 <p className="text-sm text-muted-foreground">
                   Check your inbox (and spam folder). The link will expire soon.

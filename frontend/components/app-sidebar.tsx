@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { useAuthStore } from '@/lib/store';
 import {
   Sidebar,
@@ -22,10 +23,13 @@ import {
   BookOpen,
   MessageCircle,
   BarChart3,
-  Leaf,
   LogOut,
   User,
+  Moon,
+  Sun,
+  Monitor,
 } from 'lucide-react';
+import { LogoSvg } from '@/components/LogoSvg';
 import Link from 'next/link';
 
 const navItems = [
@@ -38,6 +42,7 @@ const navItems = [
 
 export function AppSidebar() {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
   const { user, logout } = useAuthStore();
   console.log(user)
 
@@ -50,7 +55,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-2 px-4 py-2">
-          <Leaf className="w-6 h-6 text-primary" />
+          <LogoSvg className="w-6 h-6" />
           <span className="font-bold text-lg text-foreground">WellNest</span>
         </div>
       </SidebarHeader>
@@ -74,7 +79,8 @@ export function AppSidebar() {
         </nav>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
+      <SidebarFooter className="border-t border-sidebar-border space-y-2">
+        {/* User Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -107,6 +113,22 @@ export function AppSidebar() {
                 <span>Profile Settings</span>
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            
+            {/* Theme Toggle Options */}
+            <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer">
+              <Sun className="w-4 h-4 mr-2" />
+              <span>Light Theme</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer">
+              <Moon className="w-4 h-4 mr-2" />
+              <span>Dark Theme</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme('system')} className="cursor-pointer">
+              <Monitor className="w-4 h-4 mr-2" />
+              <span>System Theme</span>
+            </DropdownMenuItem>
+            
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive cursor-pointer">
               <LogOut className="w-4 h-4 mr-2" />

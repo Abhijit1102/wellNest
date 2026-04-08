@@ -155,21 +155,21 @@ export default function MoodPage() {
   // ✅ Loading UI
   if (loading.isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-gray-200 rounded w-60"></div>
-        <div className="h-64 bg-gray-200 rounded"></div>
-        <div className="h-64 bg-gray-200 rounded"></div>
+      <div className="space-y-6 animate-pulse p-4">
+        <div className="h-10 bg-muted rounded w-60"></div>
+        <div className="h-64 bg-muted rounded"></div>
+        <div className="h-64 bg-muted rounded"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50/40 via-white to-green-50/40">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto py-10 px-4 space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-emerald-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
           <div className="space-y-2">
-            <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent font-playfair">
+            <h1 className="text-5xl font-extrabold tracking-tight text-foreground font-playfair">
               Mood Tracker
             </h1>
             <p className="text-muted-foreground text-lg font-roboto-condensed">
@@ -180,23 +180,23 @@ export default function MoodPage() {
 
         {/* Error */}
         {loading.error && (
-          <div className="rounded-lg bg-rose-50 border-2 border-rose-200 p-4 text-rose-600 text-sm font-medium">
+          <div className="rounded-lg bg-destructive/10 border-2 border-destructive/30 p-4 text-destructive text-sm font-medium">
             {loading.error}
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
-          <Card className="lg:col-span-1 border-2 border-emerald-200">
-            <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="font-playfair text-emerald-900">Log Your Mood</CardTitle>
-              <CardDescription className="text-emerald-700/70">How do you feel right now?</CardDescription>
+          <Card className="lg:col-span-1 border-2 border-primary/20 bg-card">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="font-playfair text-foreground">Log Your Mood</CardTitle>
+              <CardDescription className="text-muted-foreground">How do you feel right now?</CardDescription>
             </CardHeader>
 
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {submitState.error && (
-                  <Alert className="bg-rose-50 border-rose-200 text-rose-600">
+                  <Alert className="bg-destructive/10 border-destructive/30 text-destructive">
                     <AlertDescription className="font-medium">
                       {submitState.error}
                     </AlertDescription>
@@ -204,7 +204,7 @@ export default function MoodPage() {
                 )}
 
                 {submitState.success && (
-                  <Alert className="bg-emerald-50 border-emerald-200 text-emerald-700 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Alert className="bg-primary/10 border-primary/30 text-primary animate-in fade-in slide-in-from-top-2 duration-300">
                     <AlertDescription className="font-medium flex items-center gap-2">
                       ✨ {submitState.success}
                     </AlertDescription>
@@ -213,7 +213,7 @@ export default function MoodPage() {
 
                 <FieldGroup>
                   <Field>
-                    <FieldLabel className="text-emerald-900 font-bold">Mood Level</FieldLabel>
+                    <FieldLabel className="text-foreground font-bold">Mood Level</FieldLabel>
                     <input
                       type="range"
                       min="1"
@@ -222,31 +222,31 @@ export default function MoodPage() {
                       onChange={(e) =>
                         setMood(parseInt(e.target.value))
                       }
-                      className="w-full accent-emerald-600"
+                      className="w-full accent-primary"
                     />
-                    <div className="text-center text-3xl font-playfair mt-3 p-3 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
-                      {getMoodEmoji(mood)} <span className="text-emerald-700 font-bold">{mood}/10</span>
+                    <div className="text-center text-3xl font-playfair mt-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      {getMoodEmoji(mood)} <span className="text-primary font-bold">{mood}/10</span>
                     </div>
                   </Field>
                 </FieldGroup>
 
                 <FieldGroup>
                   <Field>
-                    <FieldLabel className="text-emerald-900 font-bold">Notes (Optional)</FieldLabel>
+                    <FieldLabel className="text-foreground font-bold">Notes (Optional)</FieldLabel>
                     <Textarea
                       placeholder="Share what's on your mind today..."
                       value={note}
                       onChange={(e) =>
                         setNote(e.target.value)
                       }
-                      className="border-2 focus:border-emerald-500 focus-visible:ring-emerald-500"
+                      className="border-2 focus:border-primary focus-visible:ring-primary/50"
                     />
                   </Field>
                 </FieldGroup>
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:shadow-xl"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl"
                   disabled={submitState.isLoading}
                 >
                   {submitState.isLoading
@@ -258,25 +258,25 @@ export default function MoodPage() {
           </Card>
 
           {/* Chart */}
-          <Card className="lg:col-span-2 border-2 border-emerald-200">
-            <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="font-playfair text-emerald-900">30-Day Mood Trends</CardTitle>
+          <Card className="lg:col-span-2 border-2 border-primary/20 bg-card">
+            <CardHeader className="bg-primary/5">
+              <CardTitle className="font-playfair text-foreground">30-Day Mood Trends</CardTitle>
             </CardHeader>
 
             <CardContent className="pt-6">
               {trends.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={trends}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,185,129,0.1)" />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[1, 10]} />
-                    <Tooltip contentStyle={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '2px solid rgb(16,185,129)' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--primary)" opacity={0.1} />
+                    <XAxis dataKey="date" stroke="var(--muted-foreground)" />
+                    <YAxis domain={[1, 10]} stroke="var(--muted-foreground)" />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--card)', border: '2px solid var(--primary)', color: 'var(--foreground)' }} />
                     <Line
                       type="monotone"
                       dataKey="average_mood"
-                      stroke="rgb(5,150,105)"
+                      stroke="var(--primary)"
                       strokeWidth={3}
-                      dot={{ fill: 'rgb(5,150,105)', r: 5 }}
+                      dot={{ fill: 'var(--primary)', r: 5 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -290,9 +290,9 @@ export default function MoodPage() {
         </div>
 
         {/* Entries */}
-        <Card className="border-2 border-emerald-200">
-          <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-            <CardTitle className="font-playfair text-emerald-900">Recent Entries</CardTitle>
+        <Card className="border-2 border-primary/20 bg-card">
+          <CardHeader className="bg-primary/5">
+            <CardTitle className="font-playfair text-foreground">Recent Entries</CardTitle>
           </CardHeader>
 
           <CardContent className="pt-6">
@@ -301,10 +301,10 @@ export default function MoodPage() {
                 {entries.map((entry) => (
                   <div
                     key={entry._id}
-                    className="flex justify-between items-center p-4 border-2 border-emerald-100 rounded-lg hover:border-emerald-300 hover:bg-emerald-50/30 transition-all"
+                    className="flex justify-between items-center p-4 border-2 border-border rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all"
                   >
                     <div>
-                      <p className="font-bold text-emerald-700 text-lg">
+                      <p className="font-bold text-primary text-lg">
                         {entry.mood_score}/10
                       </p>
                       {entry.notes && (
@@ -312,7 +312,7 @@ export default function MoodPage() {
                           {entry.notes}
                         </p>
                       )}
-                      <p className="text-xs text-emerald-600/60 mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         {new Date(entry.created_at).toLocaleDateString('en-US', {
                           month: 'short', day: 'numeric', year: 'numeric'
                         })}

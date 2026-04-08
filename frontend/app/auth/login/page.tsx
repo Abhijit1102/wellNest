@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Leaf } from 'lucide-react';
+import { LogoSvg } from '@/components/LogoSvg';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
 
 export default function LoginPage() {
@@ -38,11 +38,19 @@ export default function LoginPage() {
     e.preventDefault();
     clearError();
 
+    console.log('[LOGIN PAGE] Submitting login form');
     const success = await login(email, password);
+    console.log('[LOGIN PAGE] Login result:', success);
 
     // 🔥 MAIN FIX (no race condition)
     if (success) {
-      router.push('/dashboard');
+      console.log('[LOGIN PAGE] Login successful, redirecting to dashboard');
+      // Use replace to avoid back button issues, but navigate after state is set
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 100);
+    } else {
+      console.log('[LOGIN PAGE] Login failed, staying on page');
     }
   };
 
@@ -52,7 +60,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            <Leaf className="w-8 h-8 text-primary" />
+            <LogoSvg className="w-8 h-8" />
             <span className="text-2xl font-bold text-foreground font-playfair">
               WellNest
             </span>

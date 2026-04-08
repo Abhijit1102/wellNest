@@ -82,12 +82,12 @@ export default function ProfileSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50/40 via-white to-green-50/40">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-4xl mx-auto py-10 px-4 space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-emerald-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
           <div className="space-y-2">
-            <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent">
+            <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
               Profile Settings
             </h1>
             <p className="text-muted-foreground text-lg">
@@ -97,12 +97,12 @@ export default function ProfileSettingsPage() {
         </div>
 
         {/* Account Info */}
-        <Card className="border-2 border-emerald-200">
-          <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-            <CardTitle className="text-emerald-900">
+        <Card className="border-2 border-primary/20 bg-card">
+          <CardHeader className="bg-primary/5">
+            <CardTitle className="text-foreground">
               Account Information
             </CardTitle>
-            <CardDescription className="text-emerald-700/70">
+            <CardDescription className="text-muted-foreground">
               Update your personal details
             </CardDescription>
           </CardHeader>
@@ -111,7 +111,7 @@ export default function ProfileSettingsPage() {
             <form onSubmit={handleUpdateProfile} className="space-y-6">
               {/* Success */}
               {success && (
-                <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4 text-emerald-700 text-sm">
+                <div className="rounded-lg bg-primary/10 border border-primary/30 p-4 text-primary text-sm">
                   ✨ {success}
                 </div>
               )}
@@ -195,9 +195,9 @@ export default function ProfileSettingsPage() {
         </Card>
 
         {/* Account Status */}
-        <Card className="border-2 border-emerald-200">
+        <Card className="border-2 border-primary/20 bg-card">
           <CardHeader>
-            <CardTitle>Account Status</CardTitle>
+            <CardTitle className="text-foreground">Account Status</CardTitle>
           </CardHeader>
 
           <CardContent className="space-y-4">
@@ -211,8 +211,8 @@ export default function ProfileSettingsPage() {
             </div>
 
             <div className="flex justify-between">
-              <span>Status</span>
-              <span className="text-green-600 font-semibold">
+              <span className="text-foreground">Status</span>
+              <span className="text-primary font-semibold">
                 Active
               </span>
             </div>

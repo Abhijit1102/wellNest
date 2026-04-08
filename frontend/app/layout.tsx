@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Playfair_Display, Roboto_Condensed, Lobster_Two, Merriweather } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -15,21 +16,8 @@ export const metadata: Metadata = {
   description: 'Your personal mental health companion powered by AI. Track your mood, journal your thoughts, and get personalized wellness support.',
   generator: 'v0.app',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/logo.svg',
+    apple: '/logo.svg',
   },
 }
 
@@ -39,9 +27,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${playfairDisplay.variable} ${robotoCondensed.variable} ${lobsterTwo.variable} ${merriweather.variable}`}>
+    <html lang="en" className={`${playfairDisplay.variable} ${robotoCondensed.variable} ${lobsterTwo.variable} ${merriweather.variable}`} suppressHydrationWarning>
+      <head />
       <body className={`${playfairDisplay.className} font-sans antialiased`}>
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

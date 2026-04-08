@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Leaf } from 'lucide-react';
 
 // UI Components (Ensure these paths match your project)
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { FieldGroup, Field, FieldLabel } from '@/components/ui/field';
+import { LogoSvg } from '@/components/LogoSvg';
 
 // Custom Components & API
 import { ConsentModal } from '@/components/ConsentModal';
@@ -98,7 +98,7 @@ export default function RegisterPage() {
         
         {/* Branding */}
         <div className="flex justify-center mb-8 gap-2 items-center">
-          <Leaf className="w-8 h-8 text-primary" />
+          <LogoSvg className="w-8 h-8" />
           <h1 className="text-2xl font-bold text-foreground font-playfair">WellNest</h1>
         </div>
 
@@ -196,7 +196,7 @@ export default function RegisterPage() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-muted" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-card text-muted-foreground">Already have an account?</span>

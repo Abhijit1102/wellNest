@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Leaf } from 'lucide-react';
+import { LogoSvg } from '@/components/LogoSvg';
 import { authApi } from '@/lib/api';
 
 export default function ResetPasswordPage() {
@@ -64,8 +64,8 @@ export default function ResetPasswordPage() {
         {/* ✅ WellNest Branding */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-2">
-            <Leaf className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold text-foreground">WellNest</span>
+            <LogoSvg className="w-8 h-8" />
+            <span className="text-2xl font-bold text-foreground font-playfair">WellNest</span>
           </div>
         </div>
 
@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
             )}
 
             {success ? (
-              <p className="text-green-600 text-center">
+              <p className="text-primary text-center">
                 ✅ Password reset successful. Redirecting to login...
               </p>
             ) : (

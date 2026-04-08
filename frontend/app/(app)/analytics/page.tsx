@@ -129,12 +129,12 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50/40 via-white to-green-50/40">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto py-10 px-4 space-y-8">
         {/* Header + Filter */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-emerald-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
           <div className="space-y-2">
-            <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent font-playfair">
+            <h1 className="text-5xl font-extrabold tracking-tight text-foreground font-playfair">
               Analytics & Insights
             </h1>
             <p className="text-muted-foreground text-lg font-roboto-condensed">
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
                 size="sm"
                 variant={days === d ? 'default' : 'outline'}
                 onClick={() => setDays(d)}
-                className={`text-xs ${days === d ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}
+                className={`text-xs ${days === d ? 'bg-primary hover:bg-primary/90 text-primary-foreground' : 'border-border text-foreground hover:bg-primary/10'}`}
               >
                 {d}d
               </Button>
@@ -160,22 +160,22 @@ export default function AnalyticsPage() {
 
         {/* Error */}
         {loading.error && (
-          <div className="rounded-lg bg-rose-50 border-2 border-rose-200 p-4 text-rose-600 text-sm font-medium">
+          <div className="rounded-lg bg-destructive/10 border-2 border-destructive/30 p-4 text-destructive text-sm font-medium">
             {loading.error}
           </div>
         )}
 
         {/* Metrics */}
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="text-sm flex gap-2 font-bold text-emerald-700 font-roboto-condensed">
+          <Card className="border-2 border-primary/20 bg-card hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-primary/5">
+              <CardTitle className="text-sm flex gap-2 font-bold text-primary font-roboto-condensed">
                 <Target className="w-4 h-4" />
                 Total Entries
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <p className="text-3xl font-bold text-emerald-700">
+              <p className="text-3xl font-bold text-foreground">
                 {summary?.total_mood_entries || 0}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -184,15 +184,15 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="text-sm flex gap-2 font-bold text-emerald-700 font-roboto-condensed">
+          <Card className="border-2 border-primary/20 bg-card hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-primary/5">
+              <CardTitle className="text-sm flex gap-2 font-bold text-primary font-roboto-condensed">
                 <TrendingUp className="w-4 h-4" />
                 Average Mood
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <p className="text-3xl font-bold text-emerald-700">
+              <p className="text-3xl font-bold text-foreground">
                 {summary?.average_mood
                   ? summary.average_mood.toFixed(1)
                   : '—'}
@@ -201,15 +201,15 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="text-sm flex gap-2 font-bold text-emerald-700 font-roboto-condensed">
+          <Card className="border-2 border-primary/20 bg-card hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3 bg-primary/5">
+              <CardTitle className="text-sm flex gap-2 font-bold text-primary font-roboto-condensed">
                 <Flame className="w-4 h-4" />
                 Best Streak
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
-              <p className="text-3xl font-bold text-emerald-700">
+              <p className="text-3xl font-bold text-foreground">
                 {streaks.length
                   ? Math.max(...streaks.map((s) => s.current))
                   : 0}
@@ -221,32 +221,32 @@ export default function AnalyticsPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="trends">
-          <TabsList className="bg-emerald-100">
-            <TabsTrigger value="trends" className="data-[state=active]:bg-white">Trends</TabsTrigger>
-            <TabsTrigger value="emotions" className="data-[state=active]:bg-white">Emotions</TabsTrigger>
-            <TabsTrigger value="streaks" className="data-[state=active]:bg-white">Streaks</TabsTrigger>
+          <TabsList className="bg-primary/10 border-border">
+            <TabsTrigger value="trends" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Trends</TabsTrigger>
+            <TabsTrigger value="emotions" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Emotions</TabsTrigger>
+            <TabsTrigger value="streaks" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Streaks</TabsTrigger>
           </TabsList>
 
           {/* ✅ Trends */}
           <TabsContent value="trends">
-            <Card className="border-2 border-emerald-200">
-              <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-                <CardTitle className="font-playfair text-emerald-900">Mood Trend</CardTitle>
+            <Card className="border-2 border-primary/20 bg-card">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="font-playfair text-foreground">Mood Trend</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 {summary?.mood_trend?.length ? (
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={summary.mood_trend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,185,129,0.1)" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--primary)" opacity={0.1} />
                       <XAxis dataKey="date" />
                       <YAxis domain={[1, 10]} />
-                      <Tooltip contentStyle={{ backgroundColor: 'rgba(16,185,129,0.1)', border: '2px solid rgb(16,185,129)' }} />
+                      <Tooltip contentStyle={{ backgroundColor: 'var(--card)', border: '2px solid var(--primary)' }} />
                       <Line
                         type="monotone"
                         dataKey="value"
-                        stroke="rgb(5,150,105)"
+                        stroke="var(--primary)"
                         strokeWidth={3}
-                        dot={{ fill: 'rgb(5,150,105)', r: 5 }}
+                        dot={{ fill: 'var(--primary)', r: 5 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -261,9 +261,9 @@ export default function AnalyticsPage() {
 
           {/* ✅ Emotions */}
           <TabsContent value="emotions">
-            <Card className="border-2 border-emerald-200">
-              <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-                <CardTitle className="font-playfair text-emerald-900">Emotion Distribution</CardTitle>
+            <Card className="border-2 border-primary/20 bg-card">
+              <CardHeader className="bg-primary/5">
+                <CardTitle className="font-playfair text-foreground">Emotion Distribution</CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
                 {emotions.length ? (
@@ -300,13 +300,13 @@ export default function AnalyticsPage() {
           <TabsContent value="streaks">
             <div className="grid md:grid-cols-2 gap-6">
               {streaks.map((s) => (
-                <Card key={s.type} className="border-2 border-emerald-200">
-                  <CardHeader className="bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-                    <CardTitle className="text-emerald-900 font-playfair">{s.type}</CardTitle>
+                <Card key={s.type} className="border-2 border-primary/20 bg-card">
+                  <CardHeader className="bg-primary/5">
+                    <CardTitle className="text-foreground font-playfair">{s.type}</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-6">
-                    <p className="text-lg font-bold text-emerald-700">🔥 Current: {s.current}</p>
-                    <p className="text-lg font-bold text-emerald-700 mt-2">🏆 Longest: {s.longest}</p>
+                    <p className="text-lg font-bold text-primary">🔥 Current: {s.current}</p>
+                    <p className="text-lg font-bold text-primary mt-2">🏆 Longest: {s.longest}</p>
                   </CardContent>
                 </Card>
               ))}
@@ -315,11 +315,11 @@ export default function AnalyticsPage() {
         </Tabs>
 
         {/* Insights */}
-        <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
+        <Card className="border-2 border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-emerald-900 font-playfair">🌟 Your Insights</CardTitle>
+            <CardTitle className="text-foreground font-playfair">🌟 Your Insights</CardTitle>
           </CardHeader>
-          <CardContent className="text-emerald-700">
+          <CardContent className="text-foreground">
             <p className="font-medium">
               {summary?.top_emotions?.length
                 ? `Your top emotions: ${summary.top_emotions.join(', ')}`

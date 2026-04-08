@@ -42,7 +42,9 @@ class ApiClient {
     }
 
     try {
+      console.log('[API REQUEST]', endpoint, { method: options.method || 'GET' });
       const response = await fetch(url, { ...options, headers });
+      console.log('[API RESPONSE]', endpoint, { status: response.status });
 
       // ✅ FIXED 401 HANDLING (avoid login race condition)
       if (response.status === 401 && typeof window !== 'undefined') {
@@ -60,6 +62,7 @@ class ApiClient {
       }
 
       const data = await response.json();
+      console.log('[API DATA]', endpoint, data);
 
       if (!response.ok || data.success === false) {
         return {
@@ -127,6 +130,10 @@ export const authApi = {
     }
   },
   verifyToken: () => apiClient.get<VerifyResponse>('/auth/verify'),
+  requestPasswordReset: (email: string) =>
+    apiClient.post('/auth/request-password-reset', { email }),
+  resetPassword: (token: string, password: string) =>
+    apiClient.post('/auth/reset-password', { token, new_password: password }),
 };
 
 export const userApi = {

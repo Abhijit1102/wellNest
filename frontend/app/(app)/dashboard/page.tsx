@@ -116,28 +116,28 @@ export default function DashboardPage() {
   // ✅ Loading Skeleton
   if (loading.isLoading) {
     return (
-      <div className="space-y-8 animate-pulse">
+      <div className="space-y-8 animate-pulse p-4">
         <div>
-          <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded w-64 mb-2"></div>
-          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-96"></div>
+          <div className="h-9 bg-muted rounded w-64 mb-2"></div>
+          <div className="h-5 bg-muted rounded w-96"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-32 bg-muted rounded"></div>
+          <div className="h-32 bg-muted rounded"></div>
+          <div className="h-32 bg-muted rounded"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50/40 via-white to-green-50/40">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto py-10 px-4 space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-emerald-100">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-border">
           <div className="space-y-2">
-            <h1 className="text-5xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-700 to-green-700 bg-clip-text text-transparent font-playfair">
+            <h1 className="text-5xl font-extrabold tracking-tight text-foreground font-playfair">
               Welcome back, {user?.full_name || 'User'}
             </h1>
             <p className="text-muted-foreground text-lg font-roboto-condensed">
@@ -148,14 +148,14 @@ export default function DashboardPage() {
 
         {/* Error */}
         {loading.error && (
-          <div className="rounded-lg bg-rose-50 border-2 border-rose-200 p-4 text-rose-600 text-sm font-medium">
+          <div className="rounded-lg bg-destructive/10 border-2 border-destructive/30 p-4 text-destructive text-sm font-medium">
             {loading.error}
           </div>
         )}
 
         {/* ✅ Filter */}
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold font-roboto-condensed text-emerald-900/70">Overview</h2>
+          <h2 className="text-lg font-semibold font-roboto-condensed text-muted-foreground">Overview</h2>
           <div className="flex gap-2">
             {[7, 30, 90].map((d) => (
               <Button
@@ -163,7 +163,7 @@ export default function DashboardPage() {
                 size="sm"
                 variant={days === d ? 'default' : 'outline'}
                 onClick={() => setDays(d)}
-                className={`text-xs ${days === d ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white' : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'}`}
+                className={`text-xs`}
               >
                 {d}d
               </Button>
@@ -174,9 +174,9 @@ export default function DashboardPage() {
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Today Mood */}
-          <Card className="border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="text-sm text-emerald-700 font-roboto-condensed font-bold">
+          <Card className="border-2 border-primary/20 hover:shadow-lg transition-shadow bg-card">
+            <CardHeader className="pb-3 bg-primary/5">
+              <CardTitle className="text-sm text-foreground font-roboto-condensed font-bold">
                 Today&apos;s Mood
               </CardTitle>
             </CardHeader>
@@ -185,7 +185,7 @@ export default function DashboardPage() {
                 {getMoodEmoji(stats.today_mood)}
               </div>
               <div>
-                <p className="text-3xl font-bold text-emerald-700">
+                <p className="text-3xl font-bold text-primary">
                   {stats.today_mood ?? '—'}
                 </p>
                 <p className="text-xs text-muted-foreground">out of 10</p>
@@ -194,16 +194,16 @@ export default function DashboardPage() {
           </Card>
 
           {/* Average */}
-          <Card className="border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="text-sm text-emerald-700 font-roboto-condensed font-bold">
+          <Card className="border-2 border-primary/20 hover:shadow-lg transition-shadow bg-card">
+            <CardHeader className="pb-3 bg-primary/5">
+              <CardTitle className="text-sm text-foreground font-roboto-condensed font-bold">
                 {days}-Day Average
               </CardTitle>
             </CardHeader>
             <CardContent className="flex gap-3 items-center pt-6">
-              <TrendingUp className="w-8 h-8 text-emerald-600" />
+              <TrendingUp className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-3xl font-bold text-emerald-700">
+                <p className="text-3xl font-bold text-primary">
                   {stats.average_mood
                     ? stats.average_mood.toFixed(1)
                     : '—'}
@@ -216,16 +216,16 @@ export default function DashboardPage() {
           </Card>
 
           {/* Total */}
-          <Card className="border-2 border-emerald-200 hover:shadow-lg transition-shadow">
-            <CardHeader className="pb-3 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
-              <CardTitle className="text-sm text-emerald-700 font-roboto-condensed font-bold">
+          <Card className="border-2 border-primary/20 hover:shadow-lg transition-shadow bg-card">
+            <CardHeader className="pb-3 bg-primary/5">
+              <CardTitle className="text-sm text-foreground font-roboto-condensed font-bold">
                 Total Entries
               </CardTitle>
             </CardHeader>
             <CardContent className="flex gap-3 items-center pt-6">
-              <BookOpen className="w-8 h-8 text-green-600" />
+              <BookOpen className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-3xl font-bold text-emerald-700">
+                <p className="text-3xl font-bold text-primary">
                   {stats.total_entries}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -238,23 +238,24 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div>
-          <h2 className="text-2xl font-bold mb-4 font-playfair text-emerald-900">Quick Actions</h2>
+          <h2 className="text-2xl font-bold mb-4 font-playfair text-foreground">Quick Actions</h2>
           <div className="grid md:grid-cols-3 gap-4">
             <Link href="/mood">
-              <Button className="w-full h-24 flex flex-col gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all text-white">
+              <Button className="w-full h-24 flex flex-col gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all">
                 <Smile className="w-6 h-6" />
+                Mood
               </Button>
             </Link>
 
             <Link href="/journal">
-              <Button className="w-full h-24 flex flex-col gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all text-white">
+              <Button className="w-full h-24 flex flex-col gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all">
                 <BookOpen className="w-6 h-6" />
                 Journal
               </Button>
             </Link>
 
             <Link href="/chat">
-              <Button className="w-full h-24 flex flex-col gap-2 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all text-white">
+              <Button className="w-full h-24 flex flex-col gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all">
                 <MessageCircle className="w-6 h-6" />
                 Chat
               </Button>
@@ -263,10 +264,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Wellness Tip */}
-        <Card className="border-2 border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-green-50/50">
+        <Card className="border-2 border-primary/20 bg-primary/5">
           <CardHeader>
-            <CardTitle className="text-emerald-900 font-playfair">🌿 Wellness Tip</CardTitle>
-            <CardDescription className="text-emerald-700/70">
+            <CardTitle className="text-foreground font-playfair">🌿 Wellness Tip</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Take 5 minutes for deep breathing. Try 4-7-8 technique: breathe in for 4, hold for 7, exhale for 8.
             </CardDescription>
           </CardHeader>

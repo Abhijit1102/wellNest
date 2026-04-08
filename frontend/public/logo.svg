@@ -1,0 +1,35 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light mode leaf (shown in light theme) -->
+  <defs>
+    <style>
+      @media (prefers-color-scheme: light) {
+        .leaf-light { display: block; }
+        .leaf-dark { display: none; }
+      }
+      @media (prefers-color-scheme: dark) {
+        .leaf-light { display: none; }
+        .leaf-dark { display: block; }
+      }
+    </style>
+  </defs>
+  
+  <!-- Light Mode Leaf -->
+  <g class="leaf-light">
+    <!-- Leaf shape with light mode color -->
+    <ellipse cx="100" cy="100" rx="45" ry="65" fill="oklch(0.50 0.26 155)" transform="rotate(-25 100 100)"/>
+    <!-- Leaf vein detail -->
+    <path d="M 100 40 Q 95 80 100 160" stroke="rgba(255,255,255,0.3)" stroke-width="2" fill="none"/>
+    <!-- Leaf stem -->
+    <line x1="100" y1="160" x2="100" y2="180" stroke="oklch(0.50 0.26 155)" stroke-width="3"/>
+  </g>
+  
+  <!-- Dark Mode Leaf -->
+  <g class="leaf-dark">
+    <!-- Leaf shape with dark mode color (brighter) -->
+    <ellipse cx="100" cy="100" rx="45" ry="65" fill="oklch(0.68 0.25 155)" transform="rotate(-25 100 100)"/>
+    <!-- Leaf vein detail -->
+    <path d="M 100 40 Q 95 80 100 160" stroke="rgba(0,0,0,0.2)" stroke-width="2" fill="none"/>
+    <!-- Leaf stem -->
+    <line x1="100" y1="160" x2="100" y2="180" stroke="oklch(0.68 0.25 155)" stroke-width="3"/>
+  </g>
+</svg>

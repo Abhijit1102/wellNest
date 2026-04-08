@@ -66,9 +66,12 @@ export const useAuthStore = create<AuthStore>((set) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
 
+    console.log('[LOGIN] Starting login for:', email);
     const response = await authApi.login(email, password);
+    console.log('[LOGIN] API Response:', response);
 
     if (!response.success) {
+      console.error('[LOGIN] Login failed:', response.error);
       set({
         error: response.error || 'Login failed',
         isLoading: false,
@@ -77,15 +80,18 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
 
     const authData = response.data as AuthResponse;
+    console.log('[LOGIN] Auth data:', authData);
 
     // ✅ ALWAYS use setToken
     useAuthStore.getState().setToken(authData.access_token);
+    console.log('[LOGIN] Token set successfully');
 
     set({
       user: authData.user,
       isLoading: false,
     });
 
+    console.log('[LOGIN] Login successful, returning true');
     return true;
   },
 
