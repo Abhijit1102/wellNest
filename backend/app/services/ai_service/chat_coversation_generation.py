@@ -1,6 +1,7 @@
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage
 from app.config import settings
 from langchain_openai import ChatOpenAI
+from app.prompt.chat_conversation import system_message
 
 # Initialize LLM
 _llm = ChatOpenAI(
@@ -11,21 +12,22 @@ _llm = ChatOpenAI(
     max_tokens=1024,
 )
 
-
-async def generate_chat_message(message: str) -> str:
+async def generate_chat_message(message: str, chat_history) -> str:
     try:
-        system_message = SystemMessage(
-            content=(
-                "You are a compassionate AI mental health assistant. "
-                "Be empathetic, supportive, and concise."
-            )
-        )
-
         user_message = HumanMessage(content=message)
 
-        response = await _llm.ainvoke([system_message, user_message])
+        # ✅ Combine everything in correct order
+        messages = [
+            system_message,                 # system prompt first
+            *chat_history,                 # past conversation
+            user_message                  # latest user input LAST
+        ]
 
-        return response.content.strip()
+        response = await _llm.ainvoke(messages)
+
+        token = response.response_metadata["token_usage"]["total_tokens"]
+
+        return token, response.content.strip()
 
     except Exception as e:
         print(f"[LLM ERROR]: {str(e)}")

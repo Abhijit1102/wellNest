@@ -38,19 +38,7 @@ async def create_chat(current_user=Depends(get_current_user)):
 @router.get("/conversations", response_model=List[ConversationResponse])
 async def list_conversations(current_user=Depends(get_current_user)):
     try:
-        cursor = chat_service.collection.find(
-            {"user_id": str(current_user.id)}
-        ).sort("updated_at", -1)
-
-        conversations = []
-
-        async for conv in cursor:
-            conversations.append({
-                "id": conv["session_id"],
-                "conversation_id": conv["session_id"],
-                "created_at": conv["created_at"],
-                "updated_at": conv.get("updated_at", conv["created_at"])
-            })
+        conversations = await chat_service.list_conversation(str(current_user.id))
 
         return success_response(
             message="User conversations fetched",
@@ -64,7 +52,6 @@ async def list_conversations(current_user=Depends(get_current_user)):
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
             message="Failed to fetch conversations"
         )
-
 
 # -------------------------
 # Get chat history

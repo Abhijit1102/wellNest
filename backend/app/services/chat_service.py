@@ -6,6 +6,9 @@ from app.core.logging import get_logger
 from app.services.ai_service.chat_coversation_generation import generate_chat_message
 from app.core.database import mongodb
 from app.core.time_zone import get_iso_timestamp 
+from app.utils.lanhchain_utility import format_chat_history
+from typing import List
+from langchain_core.messages import BaseMessage
 
 logger = get_logger(__name__)
 
@@ -28,6 +31,36 @@ class ChatService:
             "conversation_id": session.session_id,
             "created_at": session.created_at
         }
+    
+
+    # -------------------------
+    # List all conversations
+    # -------------------------
+    async def list_conversation(self, user_id: str) -> List[dict]:
+        cursor = self.collection.find(
+            {"user_id": user_id}
+        ).sort("updated_at", -1)
+
+        conversations = []
+
+        async for conv in cursor:
+            # Get title from first message
+            title = "Untitled"
+            if "messages" in conv and len(conv["messages"]) > 0:
+                title = conv["messages"][0].get("content", "Untitled")
+
+                # Optional: truncate long titles
+                title = title[:50]
+
+            conversations.append({
+                "id": conv["session_id"],
+                "conversation_id": conv["session_id"],
+                "title": title,
+                "created_at": conv["created_at"],
+                "updated_at": conv.get("updated_at", conv["created_at"])
+            })
+
+        return conversations 
 
     # -------------------------
     # Get Conversation History
@@ -60,9 +93,9 @@ class ChatService:
     # -------------------------
     # AI Reply
     # -------------------------
-    async def generate_ai_reply(self, user_message: str) -> str:
+    async def generate_ai_reply(self, user_message: str, chat_history: List[BaseMessage]) -> str:
         try:
-            return await generate_chat_message(user_message)  # ✅ FIXED
+            return await generate_chat_message(user_message, chat_history)  
         except Exception as e:
             logger.error(f"AI generation failed: {str(e)}")
             return "I'm here with you. Can you tell me more?"
@@ -89,14 +122,21 @@ class ChatService:
             content=payload.message
         ).model_dump()
 
+        # --------------------------------------------
+        # get Chat History for AI gor contexual chat conversation
+        # ---------------------------------------------
+          
+        chat_history = await self.get_history(str(payload.conversation_id), str(user_id))
+        formated_chat_history = format_chat_history(chat_history)
         # -------------------------
         # AI Response
         # -------------------------
-        ai_content = await self.generate_ai_reply(payload.message)
+        token, ai_content = await self.generate_ai_reply(payload.message, formated_chat_history)
 
         ai_msg = ChatMessage(
             role="assistant",
-            content=ai_content
+            content=ai_content,
+            tokens=token,
         ).model_dump()
 
         # -------------------------
