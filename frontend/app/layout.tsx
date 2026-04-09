@@ -14,7 +14,7 @@ const merriweather = Merriweather({ subsets: ["latin"], weight: ["300", "400", "
 export const metadata: Metadata = {
   title: 'WellNest - AI Mental Health Companion',
   description: 'Your personal mental health companion powered by AI. Track your mood, journal your thoughts, and get personalized wellness support.',
-  generator: 'v0.app',
+  generator: 'Abhijit Rajkumar',
   icons: {
     icon: '/logo.svg',
     apple: '/logo.svg',

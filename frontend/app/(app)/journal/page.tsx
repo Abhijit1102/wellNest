@@ -293,7 +293,7 @@ export default function JournalPage() {
                         />
                       </button>
                       <CardTitle className="text-xl font-bold truncate text-foreground">
-                        {entry.title || 'Untitled'}
+                        {entry.title?.slice(0, 20) +  "..."  || 'Untitled'}
                       </CardTitle>
                     </div>
                     <div className="flex gap-1 absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
@@ -324,7 +324,7 @@ export default function JournalPage() {
 
                 <CardContent className="flex-1 flex flex-col justify-between pt-5 pb-6">
                   <p className="text-sm text-muted-foreground leading-relaxed mb-6 whitespace-pre-wrap">
-                    {entry.content}
+                    {entry.content.slice(0, 150) + " ..."}
                   </p>
 
                   <div className="space-y-4 mt-auto">

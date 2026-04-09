@@ -1,229 +1,58 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { chatApi } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ChatMessage } from '@/lib/types';
-import { Send, MessageCircle } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Loader2 } from 'lucide-react';
 
-export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [conversationId, setConversationId] = useState<string>('');
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
+/**
+ * /chat index page:
+ * - Loads existing conversations
+ * - If any exist → redirect to the most recently updated one
+ * - If none      → create a fresh conversation and redirect to it
+ */
+export default function ChatIndexPage() {
+  const router = useRouter();
 
   useEffect(() => {
-    initializeChat();
-  }, []);
-
-  useEffect(() => {
-    // Scroll to bottom when new messages arrive
-    if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  const initializeChat = async () => {
-    try {
-      // Create a new conversation
-      const response = await chatApi.createConversation();
-      if (response.success && response.data) {
-        const convData = response.data as any;
-        setConversationId(convData.id);
-        setMessages([]);
+    const bootstrap = async () => {
+      try {
+        const res = await chatApi.getConversations();
+        if (res.success && res.data) {
+          const data = res.data as any;
+          const list = Array.isArray(data) ? data : data.conversations ?? [];
+          if (list.length > 0) {
+            // Sort newest first
+            list.sort(
+              (a: any, b: any) =>
+                new Date(b.updated_at ?? b.created_at).getTime() -
+                new Date(a.updated_at ?? a.created_at).getTime()
+            );
+            router.replace(`/chat/${list[0].id}`);
+            return;
+          }
+        }
+        // No conversations — create one
+        const newRes = await chatApi.createConversation();
+        if (newRes.success && newRes.data) {
+          const newData = newRes.data as any;
+          const id: string =
+              newData.session_id || newData.id || newData.conversation_id;
+          router.replace(`/chat/${id}`);
+        }
+      } catch (err) {
+        console.error('[Chat] Failed to bootstrap chat:', err);
       }
-    } catch (err) {
-      console.error('[v0] Failed to initialize chat:', err);
-    } finally {
-      setIsInitializing(false);
-    }
-  };
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!inputMessage.trim() || !conversationId || isLoading) {
-      return;
-    }
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      conversation_id: conversationId,
-      user_id: '',
-      content: inputMessage,
-      is_user: true,
-      created_at: new Date().toISOString(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
-    try {
-      const response = await chatApi.sendMessage(conversationId, inputMessage);
-      if (response.success && response.data) {
-        const aiData = response.data as any;
-        const aiMessage: ChatMessage = {
-          id: Date.now().toString() + '1',
-          conversation_id: conversationId,
-          user_id: '',
-          content: aiData.content || aiData.message || 'I understand. How can I help you further?',
-          is_user: false,
-          created_at: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-      }
-    } catch (err) {
-      console.error('[v0] Failed to send message:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    bootstrap();
+  }, [router]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-background">
-      {/* Header - Fixed Height */}
-      <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur-sm px-4 sm:px-6 py-4 sm:py-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="p-2.5 bg-primary rounded-xl shadow-lg flex-shrink-0">
-            <MessageCircle className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground font-playfair">
-              AI Wellness Coach
-            </h1>
-            <p className="text-muted-foreground text-xs sm:text-base font-roboto-condensed mt-1">
-              Chat with your personal AI wellness companion
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Chat Container - Flexible */}
-      <div className="flex-1 overflow-hidden px-4 sm:px-6 py-4">
-        {/* Chat Card */}
-        <Card className="border-2 border-primary/20 h-full flex flex-col overflow-hidden shadow-lg bg-card">
-          <CardHeader className="border-b-2 border-border bg-primary/5 flex-shrink-0 py-3 sm:py-4">
-            <CardTitle className="text-base sm:text-lg flex items-center gap-2 font-playfair text-foreground">
-              <div className="p-1.5 bg-primary rounded-full flex-shrink-0">
-                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-primary-foreground" />
-              </div>
-              Wellness Chat
-            </CardTitle>
-            <CardDescription className="text-muted-foreground text-xs sm:text-sm">
-              A safe space to share your thoughts and receive supportive guidance
-            </CardDescription>
-          </CardHeader>
-
-          {isInitializing ? (
-            <CardContent className="flex-1 flex items-center justify-center p-4">
-              <div className="text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-                  <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-                </div>
-                <p className="text-muted-foreground font-medium text-sm sm:text-base">Initializing your wellness chat...</p>
-              </div>
-            </CardContent>
-          ) : (
-            <>
-              {/* Messages Area - Scrollable */}
-              <ScrollArea className="flex-1 overflow-hidden">
-                <div className="p-4 sm:p-6 space-y-4">
-                  {messages.length === 0 ? (
-                    <div className="text-center py-8 sm:py-12 text-muted-foreground h-full flex flex-col justify-center">
-                      <div className="text-5xl sm:text-6xl mb-4">👋</div>
-                      <p className="mb-2 sm:mb-4 text-base sm:text-lg text-foreground font-medium">
-                        Welcome! I&apos;m your AI wellness companion.
-                      </p>
-                      <p className="mb-4 sm:mb-6 text-sm sm:text-base">How can I support you today?</p>
-                      <div className="space-y-2 sm:space-y-3 mt-4 sm:mt-6 bg-primary/5 border-2 border-primary/20 rounded-lg p-4 sm:p-6 inline-block">
-                        <p className="font-bold text-foreground text-sm sm:text-base">Try asking me about:</p>
-                        <ul className="text-muted-foreground space-y-1 sm:space-y-2 text-xs sm:text-sm">
-                          <li>• How to manage stress and anxiety</li>
-                          <li>• Building healthy daily habits</li>
-                          <li>• Understanding your emotions</li>
-                          <li>• Mindfulness and meditation techniques</li>
-                        </ul>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      {messages.map((msg) => (
-                        <div
-                          key={msg.id}
-                          className={`flex ${msg.is_user ? 'justify-end' : 'justify-start'}`}
-                        >
-                          <div
-                            className={`max-w-xs px-3 sm:px-4 py-2 sm:py-3 rounded-lg text-xs sm:text-sm ${
-                              msg.is_user
-                                ? 'bg-primary text-primary-foreground shadow-lg'
-                                : 'bg-primary/5 text-foreground border-2 border-primary/20'
-                            }`}
-                          >
-                            <p className="break-words">{msg.content}</p>
-                            <p
-                              className={`text-xs mt-1 ${
-                                msg.is_user ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                              }`}
-                            >
-                              {new Date(msg.created_at).toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                      {isLoading && (
-                        <div className="flex justify-start">
-                          <div className="bg-primary/5 text-foreground px-3 sm:px-4 py-2 sm:py-3 rounded-lg border-2 border-primary/20">
-                            <div className="flex gap-2">
-                              <div className="w-2 h-2 rounded-full bg-primary animate-bounce" />
-                              <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.1s' }} />
-                              <div className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }} />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      <div ref={scrollRef} />
-                    </>
-                  )}
-                </div>
-              </ScrollArea>
-
-              {/* Input Area - Fixed at Bottom */}
-              <div className="border-t-2 border-border p-3 sm:p-4 bg-primary/5 flex-shrink-0">
-                <form onSubmit={handleSendMessage} className="flex gap-2 mb-2">
-                  <Input
-                    type="text"
-                    placeholder="Type your message..."
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    disabled={isLoading}
-                    className="flex-1 border-2 text-sm sm:text-base focus:border-primary focus-visible:ring-primary/50"
-                  />
-                  <Button
-                    type="submit"
-                    disabled={isLoading || !inputMessage.trim()}
-                    className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl flex-shrink-0"
-                    size="sm"
-                  >
-                    <Send className="w-4 h-4" />
-                    <span className="hidden sm:inline">Send</span>
-                  </Button>
-                </form>
-                <p className="text-xs text-muted-foreground text-center px-2">
-                  💚 Our AI assistant is here to support, not replace, professional help.
-                </p>
-              </div>
-            </>
-          )}
-        </Card>
+    <div className="flex h-full items-center justify-center">
+      <div className="text-center space-y-3">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+        <p className="text-sm text-muted-foreground">Loading your conversations…</p>
       </div>
     </div>
   );

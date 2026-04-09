@@ -6,6 +6,7 @@ import { useAuthStore, initializeAuth } from '@/lib/store';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
+import { useTheme } from 'next-themes';
 
 export default function AppLayout({
   children,
@@ -14,6 +15,7 @@ export default function AppLayout({
 }) {
   const router = useRouter();
   const { isAuthenticated, token } = useAuthStore();
+  const { setTheme } = useTheme();
 
   useEffect(() => {
     // Initialize auth from localStorage on mount
@@ -21,9 +23,9 @@ export default function AppLayout({
   }, []);
 
   useEffect(() => {
-    // Redirect to login if not authenticated
+    // Redirect to landing page if not authenticated
     if (!isAuthenticated && !token) {
-      router.push('/auth/login');
+      router.push('/');
     }
   }, [isAuthenticated, token, router]);
 

@@ -195,6 +195,7 @@ export const chatApi = {
   getConversations: () => apiClient.get('/chat/conversations'),
   createConversation: () => apiClient.post('/chat/conversations', {}),
   getConversation: (id: string) => apiClient.get(`/chat/conversations/${id}`),
+  deleteConversation: (id: string) => apiClient.delete(`/chat/conversations/${id}`),
 };
 
 // Analytics endpoints
