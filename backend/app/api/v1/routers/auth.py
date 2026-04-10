@@ -1,6 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, APIRouter, Header, Depends, HTTPException
 from app.core.responses import success_response
-from app.core.logging import get_logger
+from app.core.logging import get_logger, setup_logging
 from app.models.status import HTTPStatus
 from app.models.apiError import ApiError
 from app.core.security import decode_access_token
@@ -20,6 +20,7 @@ from app.services.auth_service import (
 from app.services.email_service import send_reset_password_email
 
 router = APIRouter(tags=["auth"])
+setup_logging()
 logger = get_logger(__name__)
 
 

@@ -1,7 +1,6 @@
 from langchain_core.messages import HumanMessage
 from app.config import settings
 from langchain_openai import ChatOpenAI
-from app.prompt.chat_conversation import system_message
 
 # Initialize LLM
 _llm = ChatOpenAI(
@@ -12,7 +11,7 @@ _llm = ChatOpenAI(
     max_tokens=1024,
 )
 
-async def generate_chat_message(message: str, chat_history) -> str:
+async def generate_chat_message(system_message: str, message: str, chat_history) -> str:
     try:
         user_message = HumanMessage(content=message)
 

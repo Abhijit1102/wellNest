@@ -1,5 +1,5 @@
 from typing import Optional
-
+from bson import ObjectId
 from app.models.chat_session import ChatSession, ChatMessage
 from app.schemas.chat_session import SendMessageRequest
 from app.core.logging import get_logger
@@ -9,6 +9,7 @@ from app.core.time_zone import get_iso_timestamp
 from app.utils.lanhchain_utility import format_chat_history
 from typing import List
 from langchain_core.messages import BaseMessage
+from app.prompt.chat_conversation import create_system_message
 
 logger = get_logger(__name__)
 
@@ -17,6 +18,38 @@ class ChatService:
     @property
     def collection(self):
         return mongodb.get_collection("chat_history")
+    
+    @property
+    def users(self):
+        return mongodb.get_collection("users")
+    
+    # --------------------------------------------
+    # get User info from DB
+    # --------------------------------------------
+    async def user_info(self, user_id: str) -> dict:
+        try:
+            
+            user = await self.users.find_one(
+                {"_id": ObjectId(user_id)}
+            )
+
+            if not user:
+                return {
+                    "name": "User",
+                    "age": None
+                }
+
+            return {
+                "name": user.get("full_name", "User"),
+                "age": user.get("profile", {}).get("age", None)
+            }
+
+        except Exception as e:
+            logger.error(f"Error fetching user info: {e}")
+            return {
+                "name": "User",
+                "age": None
+            }
 
     # -------------------------
     # Create Conversation
@@ -93,12 +126,17 @@ class ChatService:
     # -------------------------
     # AI Reply
     # -------------------------
-    async def generate_ai_reply(self, user_message: str, chat_history: List[BaseMessage]) -> str:
+    async def generate_ai_reply(
+        self,
+        system_message,
+        user_message: str,
+        chat_history: List[BaseMessage]
+    ):
         try:
-            return await generate_chat_message(user_message, chat_history)  
+            return await generate_chat_message(system_message, user_message, chat_history)
         except Exception as e:
             logger.error(f"AI generation failed: {str(e)}")
-            return "I'm here with you. Can you tell me more?"
+            return 0, "I'm here with you. Can you tell me more?"
 
     # -------------------------
     # Send Message
@@ -122,17 +160,23 @@ class ChatService:
             content=payload.message
         ).model_dump()
 
-        # --------------------------------------------
-        # get Chat History for AI gor contexual chat conversation
-        # ---------------------------------------------
-          
-        chat_history = await self.get_history(str(payload.conversation_id), str(user_id))
-        formated_chat_history = format_chat_history(chat_history)
-        # -------------------------
-        # AI Response
-        # -------------------------
-        token, ai_content = await self.generate_ai_reply(payload.message, formated_chat_history)
+        # 1. Get user
+        user = await self.user_info(user_id)
 
+        # 2. Create system prompt
+        system_message = create_system_message(user["name"], user["age"])
+
+        # 3. Get history
+        chat_history = await self.get_history(payload.conversation_id, user_id)
+        formated_chat_history = format_chat_history(chat_history)
+
+        # 4. Generate AI response
+        token, ai_content = await self.generate_ai_reply(
+            system_message,
+            payload.message,
+            formated_chat_history
+        )
+        
         ai_msg = ChatMessage(
             role="assistant",
             content=ai_content,
