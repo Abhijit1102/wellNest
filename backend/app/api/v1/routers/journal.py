@@ -7,7 +7,7 @@ from app.schemas.journal import JournalCreate, JournalUpdate, FavoriteUpdate
 from app.services.journal_service import journal_service
 from app.dependencies import get_current_user
 
-router = APIRouter(tags=["journal"])
+router = APIRouter()
 
 
 # ✅ CREATE

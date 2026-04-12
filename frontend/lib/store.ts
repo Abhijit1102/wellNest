@@ -71,7 +71,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     console.log('[LOGIN] API Response:', response);
 
     if (!response.success) {
-      console.error('[LOGIN] Login failed:', response.error);
+      console.log('[LOGIN] Login failed:', response.error);
       set({
         error: response.error || 'Login failed',
         isLoading: false,
@@ -129,7 +129,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     try {
       await authApi.logout();
     } catch (e) {
-      console.error(e);
+      console.log(e);
     } finally {
       useAuthStore.getState().setToken(null);
 

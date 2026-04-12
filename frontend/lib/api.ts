@@ -1,6 +1,6 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-
+import { toast } from 'sonner';
 import { VerifyResponse } from './types';
 
 export interface ApiResponse<T> {
@@ -65,10 +65,25 @@ class ApiClient {
       console.log('[API DATA]', endpoint, data);
 
       if (!response.ok || data.success === false) {
+        const errorMsg = data.error || data.message || 'An error occurred';
+        if (typeof window !== 'undefined') {
+          toast.error(errorMsg);
+        }
         return {
           success: false,
-          error: data.error || data.message || 'An error occurred',
+          error: errorMsg,
         };
+      }
+
+      if (
+        options.method &&
+        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method.toUpperCase()) &&
+        data.message &&
+        data.message !== 'Success'
+      ) {
+        if (typeof window !== 'undefined') {
+          toast.success(data.message);
+        }
       }
 
       return {
@@ -77,9 +92,13 @@ class ApiClient {
       };
     } catch (error) {
       console.error('[API ERROR]:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Network error';
+      if (typeof window !== 'undefined') {
+        toast.error(errorMsg);
+      }
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Network error',
+        error: errorMsg,
       };
     }
   }
@@ -196,7 +215,52 @@ export const chatApi = {
   createConversation: () => apiClient.post('/chat/conversations', {}),
   getConversation: (id: string) => apiClient.get(`/chat/conversations/${id}`),
   deleteConversation: (id: string) => apiClient.delete(`/chat/conversations/${id}`),
-};
+  sendMessageStream: async (
+      conversation_id: string,
+      message: string,
+      onChunk: (chunk: string) => void,
+      onDone: () => void
+    ) => {
+      const token = localStorage.getItem('auth_token');
+      const res = await fetch(`${API_BASE_URL}/chat/message/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ conversation_id, message }),
+      });
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      let done = false;
+
+      while (!done) {
+        const { value, done: doneReading } = await reader!.read();
+        done = doneReading;
+
+        const chunk = decoder.decode(value);
+
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            const json = JSON.parse(line.replace('data: ', ''));
+
+            if (json.content) {
+              onChunk(json.content);
+            }
+
+            if (json.done) {
+              onDone();
+            }
+          }
+        }
+      }
+    }
+  };
 
 // Analytics endpoints
 export const analyticsApi = {

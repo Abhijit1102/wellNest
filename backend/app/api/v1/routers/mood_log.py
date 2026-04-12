@@ -5,7 +5,7 @@ from app.schemas.mood import MoodCreate
 from app.services.mood_service import mood_service
 from app.dependencies import get_current_user
 
-router = APIRouter(tags=["mood"])
+router = APIRouter()
 
 
 # ✅ LOG MOOD

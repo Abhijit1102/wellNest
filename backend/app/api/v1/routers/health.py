@@ -9,11 +9,11 @@ from app.models.apiError import ApiError
 from app.core.database import mongodb
 from pymongo.errors import PyMongoError
 
-router = APIRouter(tags=["Health"])
+router = APIRouter()
 logger = get_logger(__name__)
 
 
-@router.get("/", tags=["Health"])
+@router.get("/")
 async def health_check():
     try:
         logger.info("Health check endpoint called")
@@ -36,7 +36,7 @@ async def health_check():
         )
 
 
-@router.get("/db", tags=["Health"])
+@router.get("/db")
 async def db_health_check():
     """
     Ping MongoDB to check if the connection is alive.

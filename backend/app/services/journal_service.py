@@ -1,4 +1,4 @@
-import logging
+from app.core.logging import get_logger
 from bson import ObjectId
 from pymongo import ReturnDocument
 from fastapi import BackgroundTasks
@@ -11,7 +11,7 @@ from app.core.decoder_encoder import encrypt_text, decrypt_text
 from app.services.ai_service.journal_generation import generate_structured_journal
 from app.services.background_task.create_mood_log_from_journal import create_mood_log_from_journal
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class JournalService:
     @property

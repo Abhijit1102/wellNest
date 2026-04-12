@@ -14,7 +14,7 @@ from app.schemas.chat_session import (
     SendMessageRequest,
 )
 
-router = APIRouter(tags=["Chat"])
+router = APIRouter()
 logger = get_logger(__name__)
 
 
@@ -98,6 +98,20 @@ async def send_chat_message(
         status_code=HTTPStatus.CREATED
     )
 
+# -------------------------
+# Send message streaming
+# -------------------------
+@router.post("/message/stream")
+async def send_chat_message_stream(
+    payload: SendMessageRequest,
+    current_user=Depends(get_current_user)
+):
+    logger.debug(f"Current User: {current_user}")
+    logger.debug(f"Payload: {payload}")
+    return await chat_service.stream_message(
+        str(current_user.id),
+        payload
+    )
 
 # -------------------------
 # Delete conversation

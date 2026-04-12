@@ -19,7 +19,7 @@ from app.services.auth_service import (
 
 from app.services.email_service import send_reset_password_email
 
-router = APIRouter(tags=["auth"])
+router = APIRouter()
 setup_logging()
 logger = get_logger(__name__)
 

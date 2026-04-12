@@ -1,4 +1,4 @@
-import logging
+from app.core.logging import get_logger
 from bson import ObjectId
 from app.core.time_zone import get_iso_timestamp, get_iso_date_before 
 from app.core.database import mongodb
@@ -6,7 +6,7 @@ from app.models.mood_log import MoodLog
 from app.schemas.mood import MoodCreate
 from app.services.ai_service.mood_log_generation import generate_structured_mood_log
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 class MoodService:
     @property

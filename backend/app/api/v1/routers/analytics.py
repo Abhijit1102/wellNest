@@ -3,7 +3,7 @@ from app.core.responses import success_response
 from app.services.analytics_service import analytics_service
 from app.dependencies import get_current_user
 
-router = APIRouter(tags=["analytics"])
+router = APIRouter()
 
 
 @router.get("/summary")

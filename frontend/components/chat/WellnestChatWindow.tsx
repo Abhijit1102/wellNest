@@ -63,57 +63,106 @@ export function WellnestChatWindow({ conversationId }: WellnestChatWindowProps) 
     ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
   };
 
+  // const handleSend = async (overrideText?: string) => {
+  //   const text = (overrideText ?? input).trim();
+  //   if (!text || isLoading) return;
+
+  //   setInput('');
+  //   if (textareaRef.current) textareaRef.current.style.height = 'auto';
+
+  //   // Optimistic user message
+  //   const userMsg: ChatMessage = {
+  //     id: `${Date.now()}-user`,
+  //     conversation_id: conversationId,
+  //     user_id: '',
+  //     content: text,
+  //     is_user: true,
+  //     created_at: new Date().toISOString(),
+  //   };
+  //   setMessages((prev) => [...prev, userMsg]);
+  //   setIsLoading(true);
+
+  //   try {
+  //     const res = await chatApi.sendMessage(conversationId, text);
+  //     if (res.success && res.data) {
+  //       const aiData = res.data as any;
+  //       const aiMsg: ChatMessage = {
+  //         id: `${Date.now()}-ai`,
+  //         conversation_id: conversationId,
+  //         user_id: '',
+  //         content:
+  //           aiData.content || aiData.message || `I'm here to support you. Could you tell me more?`,
+  //         is_user: false,
+  //         created_at: new Date().toISOString(),
+  //       };
+  //       setMessages((prev) => [...prev, aiMsg]);
+  //     }
+  //   } catch (err) {
+  //     console.error('[ChatWindow] Failed to send message:', err);
+  //     const errMsg: ChatMessage = {
+  //       id: `${Date.now()}-err`,
+  //       conversation_id: conversationId,
+  //       user_id: '',
+  //       content: '⚠️ Something went wrong. Please try again.',
+  //       is_user: false,
+  //       created_at: new Date().toISOString(),
+  //     };
+  //     setMessages((prev) => [...prev, errMsg]);
+  //   } finally {
+  //     setIsLoading(false);
+  //     textareaRef.current?.focus();
+  //   }
+  // };
+  
   const handleSend = async (overrideText?: string) => {
-    const text = (overrideText ?? input).trim();
-    if (!text || isLoading) return;
+      const text = (overrideText ?? input).trim();
+      if (!text || isLoading) return;
 
-    setInput('');
-    if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      setInput('');
 
-    // Optimistic user message
-    const userMsg: ChatMessage = {
-      id: `${Date.now()}-user`,
-      conversation_id: conversationId,
-      user_id: '',
-      content: text,
-      is_user: true,
-      created_at: new Date().toISOString(),
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
-
-    try {
-      const res = await chatApi.sendMessage(conversationId, text);
-      if (res.success && res.data) {
-        const aiData = res.data as any;
-        const aiMsg: ChatMessage = {
-          id: `${Date.now()}-ai`,
-          conversation_id: conversationId,
-          user_id: '',
-          content:
-            aiData.content || aiData.message || `I'm here to support you. Could you tell me more?`,
-          is_user: false,
-          created_at: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, aiMsg]);
-      }
-    } catch (err) {
-      console.error('[ChatWindow] Failed to send message:', err);
-      const errMsg: ChatMessage = {
-        id: `${Date.now()}-err`,
+      const userMsg: ChatMessage = {
+        id: `${Date.now()}-user`,
         conversation_id: conversationId,
         user_id: '',
-        content: '⚠️ Something went wrong. Please try again.',
+        content: text,
+        is_user: true,
+        created_at: new Date().toISOString(),
+      };
+
+      const aiMsg: ChatMessage = {
+        id: `${Date.now()}-ai`,
+        conversation_id: conversationId,
+        user_id: '',
+        content: '',
         is_user: false,
         created_at: new Date().toISOString(),
       };
-      setMessages((prev) => [...prev, errMsg]);
-    } finally {
-      setIsLoading(false);
-      textareaRef.current?.focus();
-    }
-  };
 
+      setMessages((prev) => [...prev, userMsg, aiMsg]);
+      setIsLoading(true);
+
+      try {
+        await chatApi.sendMessageStream(
+          conversationId,
+          text,
+          (chunk) => {
+            aiMsg.content += chunk;
+
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === aiMsg.id ? { ...aiMsg } : m
+              )
+            );
+          },
+          () => {
+            setIsLoading(false);
+          }
+        );
+      } catch (err) {
+        console.error(err);
+        setIsLoading(false);
+      }
+    };
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

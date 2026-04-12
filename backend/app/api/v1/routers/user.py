@@ -11,7 +11,10 @@ from app.models.user import User
 from app.core.time_zone import get_iso_timestamp
 from app.services.cloudinary_service import upload_image_to_cloudinary
 
-router = APIRouter(tags=["users"])
+from app.core.logging import get_logger
+
+router = APIRouter()
+logger = get_logger(__name__)
 
 class UserUpdateForm:
     def __init__(
@@ -54,11 +57,11 @@ async def update_profile(
     current_user: User = Depends(get_current_user),
 ):
     # --- DEBUGGING LINE: Check your console to see if data arrives ---
-    print(f"DEBUG: Raw Form Data: {await request.form()}")
+    logger.debug(f"DEBUG: Raw Form Data: {await request.form()}")
     
     update_data = {}
 
-    print(form.username)
+    logger.debug(f"Username in form: {form.username}")
 
     if form.username:
         update_data["username"] = form.username.strip()
@@ -72,7 +75,7 @@ async def update_profile(
             update_data["avatar_url"] = avatar_url
             update_data["avatar_public_id"] = public_id
         except Exception as e:
-            print(f"Upload error: {e}")
+            logger.error(f"Upload error: {e}")
             return success_response(message="Image upload failed", status_code=HTTPStatus.INTERNAL_SERVER_ERROR)
 
     if not update_data:

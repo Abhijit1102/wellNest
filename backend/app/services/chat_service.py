@@ -3,13 +3,15 @@ from bson import ObjectId
 from app.models.chat_session import ChatSession, ChatMessage
 from app.schemas.chat_session import SendMessageRequest
 from app.core.logging import get_logger
-from app.services.ai_service.chat_coversation_generation import generate_chat_message
+from app.services.ai_service.chat_coversation_generation import generate_chat_message, generate_chat_message_stream
 from app.core.database import mongodb
 from app.core.time_zone import get_iso_timestamp 
 from app.utils.lanhchain_utility import format_chat_history
 from typing import List
 from langchain_core.messages import BaseMessage
 from app.prompt.chat_conversation import create_system_message
+from fastapi.responses import StreamingResponse
+import json
 
 logger = get_logger(__name__)
 
@@ -137,6 +139,84 @@ class ChatService:
         except Exception as e:
             logger.error(f"AI generation failed: {str(e)}")
             return 0, "I'm here with you. Can you tell me more?"
+        
+    # -------------------------
+    # Send Message streaming
+    # -------------------------
+    async def stream_message(self, user_id: str, payload: SendMessageRequest):
+
+        async def event_generator():
+            session = await self.collection.find_one({
+                "session_id": payload.conversation_id,
+                "user_id": user_id
+            })
+
+            if not session:
+                yield f"data: {json.dumps({'error': 'Conversation not found'})}\n\n"
+                return
+
+            # -------------------------
+            # User message
+            # -------------------------
+            user_msg = ChatMessage(
+                role="user",
+                content=payload.message
+            ).model_dump()
+
+            # -------------------------
+            # Prepare AI
+            # -------------------------
+            user = await self.user_info(user_id)
+            system_message = create_system_message(user["name"], user["age"])
+
+            chat_history = await self.get_history(payload.conversation_id, user_id)
+            formatted_history = format_chat_history(chat_history)
+
+            full_response = ""
+            total_tokens = 0
+
+            # -------------------------
+            # STREAM AI RESPONSE
+            # -------------------------
+            async for chunk in generate_chat_message_stream(
+                system_message,
+                payload.message,
+                formatted_history
+            ):
+                content = chunk.get("content", "")
+                token = chunk.get("token", 0)
+
+                full_response += content
+                total_tokens += token
+
+                yield f"data: {json.dumps({'content': content})}\n\n"
+
+            # -------------------------
+            # Save to DB
+            # -------------------------
+            ai_msg = ChatMessage(
+                role="assistant",
+                content=full_response,
+                tokens=total_tokens
+            ).model_dump()
+
+            await self.collection.update_one(
+                {"session_id": payload.conversation_id},
+                {
+                    "$push": {
+                        "messages": {
+                            "$each": [user_msg, ai_msg]
+                        }
+                    },
+                    "$set": {
+                        "updated_at": get_iso_timestamp()
+                    }
+                }
+            )
+
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")    
 
     # -------------------------
     # Send Message

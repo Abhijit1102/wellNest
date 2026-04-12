@@ -1,6 +1,8 @@
 from datetime import datetime, timezone, timedelta
 from tzlocal import get_localzone
+from app.core.logging import get_logger
 
+logger = get_logger(__name__)
 def get_iso_timestamp(dt: datetime = None) -> str:
     """Returns an ISO 8601 string. Default is 'now' in UTC."""
     if dt is None:
@@ -21,5 +23,5 @@ def get_timezone() -> str:
     try:
         return str(get_localzone())
     except Exception as e:
-        print(e)
+        logger.error(f"Timezone conversion error: {e}")
         return "UTC"

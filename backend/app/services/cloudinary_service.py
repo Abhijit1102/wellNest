@@ -1,6 +1,6 @@
 import os
 import asyncio
-import logging
+from app.core.logging import get_logger
 import tempfile
 import cloudinary
 import cloudinary.uploader
@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import UploadFile, HTTPException, status
 from app.config import settings
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Config
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
